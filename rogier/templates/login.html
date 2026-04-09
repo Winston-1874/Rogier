@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Rogier — Connexion{% endblock %}
+
+{% block content %}
+<section class="login-section">
+    <h1>Connexion</h1>
+    {% if error %}
+    <p class="error-message">{{ error }}</p>
+    {% endif %}
+    <form method="post" action="/login">
+        <label for="password">Mot de passe</label>
+        <input type="password" id="password" name="password" required autofocus>
+        <button type="submit">Se connecter</button>
+    </form>
+</section>
+{% endblock %}
