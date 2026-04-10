@@ -14,16 +14,27 @@ import bcrypt
 
 
 def main() -> int:
+    print("--- Génération du hash pour ROGIER_ADMIN_PASSWORD_HASH ---")
+    print()
+    print("Choisissez un mot de passe administrateur (minimum 10 caractères).")
+    print("Il ne s'affichera pas à l'écran pendant la saisie, c'est normal.")
+    print()
     pw1 = getpass.getpass("Mot de passe : ")
     if len(pw1) < 10:
         print("Erreur : le mot de passe doit faire au moins 10 caractères.", file=sys.stderr)
         return 1
+    print("Retapez le même mot de passe pour confirmer :")
     pw2 = getpass.getpass("Confirmer : ")
     if pw1 != pw2:
-        print("Erreur : les mots de passe ne correspondent pas.", file=sys.stderr)
+        print("Erreur : les deux saisies ne correspondent pas. Relancez le script.", file=sys.stderr)
         return 1
     hashed = bcrypt.hashpw(pw1.encode("utf-8"), bcrypt.gensalt(rounds=12))
-    print(hashed.decode("utf-8"))
+    print()
+    print("Copiez la ligne ci-dessous dans votre fichier .env,")
+    print("à la ligne ROGIER_ADMIN_PASSWORD_HASH :")
+    print()
+    print(f"ROGIER_ADMIN_PASSWORD_HASH={hashed.decode('utf-8')}")
+    print()
     return 0
 
 
