@@ -13,8 +13,15 @@ Structure cible (§8.1 du SPEC) :
     │   └── {hash}.json
     ├── versions/
     │   └── {version_id}.json
-    └── raw/
-        └── {hash}.html
+    ├── raw/
+    │   └── {hash}.html             # raw HTML d'un Document (clé = sha256 du contenu)
+    └── fetch_cache/
+        ├── {sha256_url}.html       # cache du fetcher Justel (clé = sha256 de l'URL)
+        └── {sha256_url}.json       # sidecar : ETag, fetched_at, content_hash
+
+Le séparation `raw/` vs `fetch_cache/` est délibérée : le premier est la
+propriété de `storage.documents` (durée de vie liée au Document), le second
+celle de `fetching.cache` (TTL 24h, indépendant des Documents).
 """
 
 from __future__ import annotations
@@ -33,8 +40,17 @@ def versions_dir(data_dir: Path) -> Path:
 
 
 def raw_dir(data_dir: Path) -> Path:
-    """Répertoire du cache HTML brut."""
+    """Répertoire du HTML brut associé à un Document (clé = sha256 du contenu)."""
     return data_dir / "raw"
+
+
+def fetch_cache_dir(data_dir: Path) -> Path:
+    """Répertoire du cache du fetcher Justel (clé = sha256 de l'URL).
+
+    Distinct de `raw/` : ces fichiers expirent après 24h et ne sont pas liés
+    à un Document. Cf. §6.2.4 du SPEC.
+    """
+    return data_dir / "fetch_cache"
 
 
 def document_path(data_dir: Path, document_hash: str) -> Path:
@@ -59,5 +75,10 @@ def admin_path(data_dir: Path) -> Path:
 
 def ensure_dirs(data_dir: Path) -> None:
     """Créer les sous-répertoires de données s'ils n'existent pas."""
-    for sub in (docs_dir(data_dir), versions_dir(data_dir), raw_dir(data_dir)):
+    for sub in (
+        docs_dir(data_dir),
+        versions_dir(data_dir),
+        raw_dir(data_dir),
+        fetch_cache_dir(data_dir),
+    ):
         sub.mkdir(parents=True, exist_ok=True)

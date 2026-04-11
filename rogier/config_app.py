@@ -84,9 +84,10 @@ def load_config() -> AppConfig:
 
     data_dir = Path(data_dir_str).resolve()
 
-    # Créer les sous-dossiers de données
-    for sub in ("docs", "versions", "raw"):
-        (data_dir / sub).mkdir(parents=True, exist_ok=True)
+    # Créer les sous-dossiers de données (source de vérité : storage.paths)
+    from rogier.storage import paths as _paths
+
+    _paths.ensure_dirs(data_dir)
 
     # Vérifier que le répertoire est accessible en écriture
     if not os.access(data_dir, os.W_OK):
