@@ -18,6 +18,37 @@
             <button type="button" class="btn-small" id="expand-all">Tout developper</button>
             <button type="button" class="btn-small" id="collapse-all">Tout replier</button>
         </div>
+        {% if warning_nodes or dismissed %}
+        <div class="tree-filter">
+            {% if show_warnings_only %}
+            <a href="/document/{{ document.hash }}/tree{% if selected_path %}?node={{ selected_path }}{% endif %}" class="btn-small">Afficher tout</a>
+            {% else %}
+            {% if warning_nodes %}
+            <a href="/document/{{ document.hash }}/tree?show_warnings=1{% if selected_path %}&node={{ selected_path }}{% endif %}" class="btn-small btn-warning-filter">{{ warning_nodes|length }} avertissement{{ 's' if warning_nodes|length > 1 else '' }}</a>
+            {% endif %}
+            {% endif %}
+            {% if dismissed %}
+            <span class="tree-filter-hint">{{ dismissed|length }} type{{ 's' if dismissed|length > 1 else '' }} ignore{{ 's' if dismissed|length > 1 else '' }}</span>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if show_warnings_only %}
+        <nav class="tree-nav" aria-label="Noeuds avec avertissements">
+            <ul class="tree-root">
+                {% for wn in warning_nodes %}
+                <li class="tree-item{% if wn.path == selected_path %} tree-item--selected{% endif %}">
+                    <span class="tree-warning" aria-hidden="true"></span>
+                    <a href="/document/{{ document.hash }}/tree?node={{ wn.path }}&show_warnings=1#content"
+                       class="tree-link">
+                        {{ wn.label }}{% if wn.title %} — {{ wn.title }}{% endif %}
+                    </a>
+                    <span class="tree-warning-count">{{ wn.warnings|length }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </nav>
+        {% else %}
         <nav class="tree-nav" aria-label="Arbre du document">
             <ul class="tree-root">
                 {% for item in tree_data recursive %}
@@ -28,7 +59,7 @@
                     {% else %}
                     <span class="tree-indent" aria-hidden="true"></span>
                     {% endif %}
-                    <a href="/document/{{ document.hash }}/tree?node={{ item.path }}"
+                    <a href="/document/{{ document.hash }}/tree?node={{ item.path }}#content"
                        class="tree-link{% if item.is_article %} tree-link--article{% endif %}">
                         {{ item.label }}
                         {% if item.title and not item.is_article %}<span class="tree-title">{{ item.title }}</span>{% endif %}
@@ -45,9 +76,10 @@
                 {% endfor %}
             </ul>
         </nav>
+        {% endif %}
     </aside>
 
-    <div class="content-panel">
+    <div class="content-panel" id="content">
         <nav class="breadcrumb" aria-label="Fil d'Ariane">
             {% for crumb in breadcrumb %}
             {% if not loop.last %}
@@ -58,6 +90,37 @@
             {% endif %}
             {% endfor %}
         </nav>
+
+        {% if selected_path %}
+        <div class="nav-bars">
+            <div class="prev-next-nav">
+                {% if prev_path %}
+                <a href="/document/{{ document.hash }}/tree?node={{ prev_path }}{% if show_warnings_only %}&show_warnings=1{% endif %}#content" class="btn-small">&larr; Precedent</a>
+                {% else %}
+                <span class="btn-small btn-disabled">&larr; Precedent</span>
+                {% endif %}
+                {% if next_path %}
+                <a href="/document/{{ document.hash }}/tree?node={{ next_path }}{% if show_warnings_only %}&show_warnings=1{% endif %}#content" class="btn-small">Suivant &rarr;</a>
+                {% else %}
+                <span class="btn-small btn-disabled">Suivant &rarr;</span>
+                {% endif %}
+            </div>
+            {% if warning_nodes %}
+            <div class="prev-next-nav prev-next-warnings">
+                {% if prev_warning %}
+                <a href="/document/{{ document.hash }}/tree?node={{ prev_warning }}{% if show_warnings_only %}&show_warnings=1{% endif %}#content" class="btn-small btn-warning-nav">&larr; Avert. prec.</a>
+                {% else %}
+                <span class="btn-small btn-disabled">&larr; Avert. prec.</span>
+                {% endif %}
+                {% if next_warning %}
+                <a href="/document/{{ document.hash }}/tree?node={{ next_warning }}{% if show_warnings_only %}&show_warnings=1{% endif %}#content" class="btn-small btn-warning-nav">Avert. suiv. &rarr;</a>
+                {% else %}
+                <span class="btn-small btn-disabled">Avert. suiv. &rarr;</span>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
 
         <article class="node-content">
             <h2>{{ selected_node.label }}{% if selected_node.title %} — {{ selected_node.title }}{% endif %}</h2>
@@ -70,7 +133,7 @@
                 {% for child in selected_node.children %}
                 {% set child_path = selected_path ~ ('.' if selected_path else '') ~ loop.index0 %}
                 <li>
-                    <a href="/document/{{ document.hash }}/tree?node={{ child_path }}">
+                    <a href="/document/{{ document.hash }}/tree?node={{ child_path }}#content">
                         {{ child.label }}{% if child.title %} — {{ child.title }}{% endif %}
                     </a>
                 </li>
@@ -80,15 +143,43 @@
             <p class="hint">Ce noeud est vide.</p>
             {% endif %}
 
-            {% if selected_node.metadata.warnings %}
+            {% if active_warnings %}
             <div class="node-warnings">
                 <p><strong>Avertissements :</strong></p>
                 <ul>
-                    {% for w in selected_node.metadata.warnings %}
-                    <li>{{ w }}</li>
+                    {% for w in active_warnings %}
+                    <li>
+                        {{ w }}
+                        <form method="post" action="/document/{{ document.hash }}/dismiss-warning" class="dismiss-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                            <input type="hidden" name="warning_type" value="{{ w }}">
+                            <input type="hidden" name="return_node" value="{{ selected_path }}">
+                            <input type="hidden" name="return_mode" value="{{ '1' if show_warnings_only else '' }}">
+                            <button type="submit" class="btn-dismiss" title="Ignorer ce type d'avertissement pour tout le document">Ignorer ce type</button>
+                        </form>
+                    </li>
                     {% endfor %}
                 </ul>
             </div>
+            {% endif %}
+
+            {% if dismissed and not show_warnings_only %}
+            <details class="dismissed-section">
+                <summary>{{ dismissed|length }} type{{ 's' if dismissed|length > 1 else '' }} d'avertissement ignore{{ 's' if dismissed|length > 1 else '' }}</summary>
+                <ul>
+                    {% for d in dismissed %}
+                    <li>
+                        {{ d }}
+                        <form method="post" action="/document/{{ document.hash }}/restore-warning" class="dismiss-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                            <input type="hidden" name="warning_type" value="{{ d }}">
+                            <input type="hidden" name="return_node" value="{{ selected_path }}">
+                            <button type="submit" class="btn-restore">Restaurer</button>
+                        </form>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </details>
             {% endif %}
         </article>
     </div>

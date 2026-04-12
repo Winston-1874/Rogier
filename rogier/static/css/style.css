@@ -92,25 +92,41 @@ main:not(:has(.tree-layout)) {
 }
 
 .btn-danger {
-    background: #c0392b;
+    background: #e74c3c;
     color: #fff;
+    font-weight: 600;
 }
 
 .btn-danger:hover {
-    background: #a93226;
+    background: #c0392b;
 }
 
 .btn-small {
+    display: inline-block;
     padding: 0.25rem 0.6rem;
     font-size: 0.8rem;
     border: 1px solid #ccc;
     border-radius: 3px;
     background: #fff;
+    color: #333;
+    text-decoration: none;
     cursor: pointer;
 }
 
 .btn-small:hover {
     background: #f0f0f0;
+}
+
+.btn-danger.btn-small {
+    background: #e74c3c;
+    color: #fff;
+    border-color: #e74c3c;
+    font-weight: 600;
+}
+
+.btn-danger.btn-small:hover {
+    background: #c0392b;
+    border-color: #c0392b;
 }
 
 /* Login */
@@ -401,6 +417,107 @@ main:not(:has(.tree-layout)) {
     border-bottom: 7px solid #e67e22;
     margin-left: 0.3rem;
     vertical-align: middle;
+}
+
+/* Filtre avertissements */
+.tree-filter {
+    padding: 0.4rem 0.75rem;
+    border-bottom: 1px solid #eee;
+}
+
+.btn-warning-filter {
+    border-color: #e67e22;
+    color: #e67e22;
+}
+
+.tree-warning-count {
+    font-size: 0.75rem;
+    color: #e67e22;
+    margin-left: 0.3rem;
+}
+
+/* Navigation precedent/suivant */
+.nav-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-bottom: 1rem;
+}
+
+.prev-next-nav {
+    display: flex;
+    justify-content: space-between;
+}
+
+.btn-warning-nav {
+    border-color: #e67e22;
+    color: #e67e22;
+}
+
+.btn-disabled {
+    opacity: 0.35;
+    cursor: default;
+    pointer-events: none;
+}
+
+.tree-filter-hint {
+    font-size: 0.8rem;
+    color: #888;
+    margin-left: 0.5rem;
+}
+
+/* Bouton ignorer/restaurer warning */
+.dismiss-form {
+    display: inline;
+    margin-left: 0.5rem;
+}
+
+.btn-dismiss {
+    background: none;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    padding: 0.1rem 0.5rem;
+    font-size: 0.75rem;
+    color: #888;
+    cursor: pointer;
+}
+
+.btn-dismiss:hover {
+    background: #f0f0f0;
+    color: #333;
+}
+
+.btn-restore {
+    background: none;
+    border: 1px solid #aed6f1;
+    border-radius: 3px;
+    padding: 0.1rem 0.5rem;
+    font-size: 0.75rem;
+    color: #2471a3;
+    cursor: pointer;
+}
+
+.btn-restore:hover {
+    background: #eaf2f8;
+}
+
+.dismissed-section {
+    margin-top: 1.5rem;
+    font-size: 0.85rem;
+    color: #888;
+}
+
+.dismissed-section summary {
+    cursor: pointer;
+}
+
+.dismissed-section ul {
+    margin-left: 1.5rem;
+    margin-top: 0.5rem;
+}
+
+.dismissed-section li {
+    margin-bottom: 0.3rem;
 }
 
 /* Breadcrumb */

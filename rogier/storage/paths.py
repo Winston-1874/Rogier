@@ -96,6 +96,17 @@ def admin_path(data_dir: Path) -> Path:
     return data_dir / "admin.json"
 
 
+def ui_dir(data_dir: Path) -> Path:
+    """Répertoire des préférences UI par document."""
+    return data_dir / "ui"
+
+
+def dismissed_warnings_path(data_dir: Path, document_hash: str) -> Path:
+    """Chemin du fichier de warnings ignorés pour un Document."""
+    _validate_sha256(document_hash, "document_hash")
+    return ui_dir(data_dir) / f"{document_hash}_dismissed.json"
+
+
 def ensure_dirs(data_dir: Path) -> None:
     """Créer les sous-répertoires de données s'ils n'existent pas."""
     for sub in (
@@ -103,5 +114,6 @@ def ensure_dirs(data_dir: Path) -> None:
         versions_dir(data_dir),
         raw_dir(data_dir),
         fetch_cache_dir(data_dir),
+        ui_dir(data_dir),
     ):
         sub.mkdir(parents=True, exist_ok=True)

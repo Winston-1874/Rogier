@@ -45,14 +45,17 @@ _LEVEL_TO_KIND: dict[str, NodeKind] = {
 # ---------------------------------------------------------------------------
 
 # Toute ancre, hiérarchique (LNK\d+) ou article (Art.X)
-RE_ANY_ANCHOR = re.compile(r'<a name="(LNK\d+|Art\.[^"]+)"')
+# Supporte guillemets doubles et simples, balises majuscules et minuscules.
+RE_ANY_ANCHOR = re.compile(
+    r"""<[aA]\s+[nN][aA][mM][eE]=['"](LNK\d+|Art\.[^'"]+)['"]"""
+)
 
 # Entrée hiérarchique.
 # IMPORTANT : Sous-section avant Section pour éviter le match préfixe.
 RE_HIERARCHY_ENTRY = re.compile(
-    r'<a name="LNK\d+"[^>]*>'
+    r"""<[aA]\s+[nN][aA][mM][eE]=['"]LNK\d+['"][^>]*>"""
     r"(PARTIE|LIVRE|TITRE|CHAPITRE|Sous-section|Section)"
-    r"\s+([^<]+?)</a>"
+    r"\s+([^<]+?)</[aA]>"
     r"([^<]*)"
 )
 
@@ -104,19 +107,39 @@ class ParsingReport:
 # Extraction
 # ---------------------------------------------------------------------------
 
+def _find_case_insensitive(html: str, candidates: list[str], start: int = 0) -> int:
+    """Chercher la première occurrence parmi plusieurs variantes."""
+    best = -1
+    for candidate in candidates:
+        pos = html.find(candidate, start)
+        if pos != -1 and (best == -1 or pos < best):
+            best = pos
+    return best
+
+
 def locate_body(html: str) -> str:
     """Isoler la zone 3 (corps du texte) du HTML Justel.
 
     Exclut l'entête, la TOC et la section « Articles modifiés ».
+    Supporte les deux formats : navigateur (minuscules, guillemets doubles)
+    et serveur Justel brut (majuscules, guillemets simples).
     """
-    toc_marker = html.find('id="list-title-2"')
+    toc_marker = _find_case_insensitive(html, [
+        'id="list-title-2"',
+        "id='list-title-2'",
+    ])
     if toc_marker == -1:
         raise JustelParseError(
             'Marqueur de table des matières (id="list-title-2") introuvable '
             "dans le HTML. Le format du fichier est peut-être inattendu."
         )
 
-    body_start = html.find('<a name="LNK0001"', toc_marker + 1000)
+    body_start = _find_case_insensitive(html, [
+        '<a name="LNK0001"',
+        "<a name='LNK0001'",
+        '<A NAME="LNK0001"',
+        "<A NAME='LNK0001'",
+    ], toc_marker + 1000)
     if body_start == -1:
         raise JustelParseError(
             "Ancre de début du corps (LNK0001) introuvable après la table "
@@ -145,9 +168,16 @@ def _find_article_content_start(raw: str) -> int:
     while True:
         while i < len(raw) and raw[i] in " \t\n\r":
             i += 1
-        if i + 1 >= len(raw) or raw[i : i + 2] != "<a":
+        if i + 1 >= len(raw) or raw[i : i + 2].lower() != "<a":
             break
-        close = raw.find("</a>", i)
+        close_lower = raw.find("</a>", i)
+        close_upper = raw.find("</A>", i)
+        if close_lower == -1:
+            close = close_upper
+        elif close_upper == -1:
+            close = close_lower
+        else:
+            close = min(close_lower, close_upper)
         if close == -1:
             break
         i = close + 4
