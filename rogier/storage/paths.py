@@ -107,6 +107,12 @@ def dismissed_warnings_path(data_dir: Path, document_hash: str) -> Path:
     return ui_dir(data_dir) / f"{document_hash}_dismissed.json"
 
 
+def exports_dir(data_dir: Path, document_hash: str) -> Path:
+    """Répertoire des exports d'un Document (manifest JSON, etc.)."""
+    _validate_sha256(document_hash, "document_hash")
+    return data_dir / "exports" / document_hash
+
+
 def ensure_dirs(data_dir: Path) -> None:
     """Créer les sous-répertoires de données s'ils n'existent pas."""
     for sub in (
@@ -115,5 +121,6 @@ def ensure_dirs(data_dir: Path) -> None:
         raw_dir(data_dir),
         fetch_cache_dir(data_dir),
         ui_dir(data_dir),
+        data_dir / "exports",
     ):
         sub.mkdir(parents=True, exist_ok=True)

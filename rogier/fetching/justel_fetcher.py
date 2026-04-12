@@ -38,11 +38,8 @@ SOURCE_ENCODING = "windows-1252"
 
 # Préfixes d'URL acceptés (§6.4)
 _ALLOWED_PATH_PREFIXES = (
-    "/cgi_loi/change_lg.pl",
-    "/eli/loi/",
-    "/eli/arrete/",
-    "/eli/wet/",      # variante néerlandaise
-    "/eli/besluit/",  # variante néerlandaise
+    "/cgi_loi/",
+    "/eli/",
 )
 
 

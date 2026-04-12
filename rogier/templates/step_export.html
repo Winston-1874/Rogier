@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Export — {{ document.name }} — Rogier{% endblock %}
+
+{% block content %}
+<h1>Export — {{ document.name }}</h1>
+
+<p>
+    <a href="/document/{{ document.hash }}/tree">&larr; Retour à l'arbre</a>
+</p>
+
+{# ------------------------------------------------------------------ #}
+{# Section 1 — Stratégie de chunking                                  #}
+{# ------------------------------------------------------------------ #}
+
+<form method="post" action="/document/{{ document.hash }}/export" id="export-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+    <section class="export-section">
+        <h2>Stratégie de chunking</h2>
+
+        <div class="radio-group">
+            <label>
+                <input type="radio" name="strategy" value="per_article"
+                       {{ 'checked' if strategy == 'per_article' else '' }}>
+                <strong>Un chunk par article</strong>
+                <p class="radio-help">Chaque article du document devient un chunk indépendant. Pas de regroupement, pas de découpage.</p>
+            </label>
+
+            <label>
+                <input type="radio" name="strategy" value="hybrid"
+                       {{ 'checked' if strategy == 'hybrid' else '' }}>
+                <strong>Chunking hybride</strong>
+                <p class="radio-help">Les articles courts restent intacts. Les articles longs sont découpés par paragraphes (§).</p>
+            </label>
+        </div>
+
+        <details class="advanced-params">
+            <summary>Paramètres avancés</summary>
+            <div class="param-grid">
+                <label for="hybrid_threshold">Seuil hybride (caractères) :</label>
+                <input type="number" id="hybrid_threshold" name="hybrid_threshold"
+                       value="{{ hybrid_threshold }}" min="100" max="50000">
+
+                <label for="max_chunk_size">Taille max avant alerte (caractères) :</label>
+                <input type="number" id="max_chunk_size" name="max_chunk_size"
+                       value="{{ max_chunk_size }}" min="500" max="100000">
+
+                <label>
+                    <input type="checkbox" name="include_breadcrumb" value="1"
+                           {{ 'checked' if include_breadcrumb else '' }}>
+                    Inclure le breadcrumb hiérarchique en tête de chaque chunk
+                </label>
+
+                <label>
+                    <input type="checkbox" name="include_node_titles" value="1"
+                           {{ 'checked' if include_node_titles else '' }}>
+                    Inclure les titres humains des niveaux dans le breadcrumb
+                </label>
+            </div>
+        </details>
+    </section>
+
+    {# ------------------------------------------------------------------ #}
+    {# Sections 2-3 — Validation (Phase 7)                                #}
+    {# ------------------------------------------------------------------ #}
+
+    <section class="export-section export-placeholder">
+        <h2>Invariants sémantiques</h2>
+        <p class="placeholder-text">La validation des invariants sera disponible dans une prochaine version.</p>
+    </section>
+
+    <section class="export-section export-placeholder">
+        <h2>Rapport de validation</h2>
+        <p class="placeholder-text">Le rapport de validation sera disponible dans une prochaine version.</p>
+    </section>
+
+    {# ------------------------------------------------------------------ #}
+    {# Section 4 — Export                                                  #}
+    {# ------------------------------------------------------------------ #}
+
+    <section class="export-section">
+        <h2>Export</h2>
+
+        <p class="export-preview">
+            Le fichier exporté contiendra <strong>{{ total_chunks }}</strong> chunks.
+            Taille estimée : <strong>{{ estimated_size }}</strong> caractères.
+        </p>
+
+        <button type="submit" class="btn btn-primary btn-large">Exporter en Markdown</button>
+    </section>
+</form>
+{% endblock %}
