@@ -42,6 +42,15 @@ def label_container_rename(kind_label: str, number: str) -> str:
     return f"Renommage {kind_label} {number}"
 
 
+# ---------------------------------------------------------------------------
+# Invariant manual_edits : un noeud est soit ARTICLE (on édite content),
+# soit conteneur (on édite title). Si un jour un conteneur acquiert un
+# contenu textuel indépendant (ex. préambule), il faudra deux clés par
+# noeud ou un suffixe ":content"/":title". Pour l'instant, une clé = un
+# noeud, le champ édité est déterminé par NodeKind.
+# ---------------------------------------------------------------------------
+
+
 def label_chunking_changed() -> str:
     return "Stratégie de chunking modifiée"
 

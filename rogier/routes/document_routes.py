@@ -1,18 +1,25 @@
-"""Routes document : affichage arbre, redirect, suppression."""
+"""Routes document : affichage arbre, redirect, suppression, édition."""
 
 from __future__ import annotations
 
+import copy
 import json
 import logging
 
 from fastapi import APIRouter, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
 from rogier.csrf import check_csrf_token
 from rogier.dependencies import AuthDep, ConfigDep, TemplatesDep
 from rogier.parsing.tree import Node, NodeKind
 from rogier.storage import paths as storage_paths
 from rogier.storage.documents import delete_document, load_document
+from rogier.storage.versions import (
+    create_new_version,
+    label_container_rename,
+    label_manual_edit_article,
+    load_version,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +55,15 @@ def _save_dismissed(data_dir, doc_hash: str, dismissed: list[str]) -> None:
 
 
 def _find_node_by_path(root: Node, path: str) -> Node | None:
-    """Trouver un noeud par son chemin d'index (ex: '0', '0.2', '0.2.1')."""
+    """Trouver un noeud par son chemin d'index (ex: '0', '0.2', '0.2.1').
+
+    LIMITATION v0.1 : le chemin est positionnel (indices dans children).
+    Si l'arbre est re-parsé depuis une source mise à jour, les indices
+    changent et les manual_edits des versions précédentes pointent vers
+    les mauvais noeuds. En v0.1 un document importé n'est jamais
+    re-parsé, donc le risque est nul. En v0.2, migrer vers un
+    identifiant stable (ex: NodeKind + number) si le re-parse est ajouté.
+    """
     if not path:
         return root
 
@@ -222,10 +237,28 @@ async def document_tree(
     """Afficher l'arbre du document avec le noeud selectionne."""
     doc = load_document(config.data_dir, doc_hash)
 
+    # Charger la version active pour l'overlay manual_edits
+    current_version = None
+    manual_edits: dict[str, str] = {}
+    if doc.current_version_id:
+        current_version = load_version(config.data_dir, doc.current_version_id)
+        manual_edits = current_version.config.manual_edits
+
     # Noeud selectionne
     selected_node = _find_node_by_path(doc.tree, node)
     if selected_node is None:
         raise HTTPException(status_code=404, detail="Noeud introuvable.")
+
+    # Overlay manual_edits : remplacer content (article) ou title (conteneur)
+    display_content = selected_node.content
+    display_title = selected_node.title
+    node_edited = False
+    if node in manual_edits:
+        node_edited = True
+        if selected_node.kind == NodeKind.ARTICLE:
+            display_content = manual_edits[node]
+        else:
+            display_title = manual_edits[node]
 
     breadcrumb = _build_breadcrumb(doc.tree, node)
     tree_data = _build_tree_data(doc.tree)
@@ -261,6 +294,9 @@ async def document_tree(
             "tree_data": tree_data,
             "selected_node": selected_node,
             "selected_path": node,
+            "display_content": display_content,
+            "display_title": display_title,
+            "node_edited": node_edited,
             "breadcrumb": breadcrumb,
             "counts": counts,
             "prev_path": prev_path,
@@ -277,6 +313,71 @@ async def document_tree(
             "authenticated": True,
         },
     )
+
+
+@router.post("/{doc_hash}/node/edit")
+async def edit_node(
+    request: Request,
+    doc_hash: str,
+    config: ConfigDep,
+    csrf_token: AuthDep,
+) -> JSONResponse:
+    """Éditer le contenu d'un noeud (article) ou le titre (conteneur).
+
+    Reçoit un JSON { "node_path": "0.2.1", "new_content": "..." }
+    et un header X-CSRF-Token. Crée une nouvelle version.
+    """
+    # CSRF via header (requête AJAX)
+    csrf_header = request.headers.get("X-CSRF-Token", "")
+    check_csrf_token(csrf_header, csrf_token)
+
+    try:
+        body = await request.json()
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="Corps JSON invalide.") from exc
+
+    node_path = body.get("node_path", "").strip()
+    new_content = body.get("new_content", "")
+    if not node_path:
+        raise HTTPException(status_code=400, detail="Chemin du noeud manquant.")
+    if len(new_content) > 100_000:
+        raise HTTPException(status_code=413, detail="Contenu trop long (max 100 000 caractères).")
+
+    doc = load_document(config.data_dir, doc_hash)
+
+    # Vérifier que le noeud existe
+    target = _find_node_by_path(doc.tree, node_path)
+    if target is None:
+        raise HTTPException(status_code=404, detail="Noeud introuvable.")
+
+    # Déterminer le label selon le type de noeud
+    if target.kind == NodeKind.ARTICLE:
+        label = label_manual_edit_article(target.number)
+    elif target.kind in (
+        NodeKind.PARTIE, NodeKind.LIVRE, NodeKind.TITRE,
+        NodeKind.CHAPITRE, NodeKind.SECTION, NodeKind.SOUS_SECTION,
+    ):
+        label = label_container_rename(target.kind_label(), target.number)
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Type de noeud non éditable : {target.kind.value}.",
+        )
+
+    # Copier la config de la version active et mettre à jour manual_edits
+    if doc.current_version_id:
+        current_version = load_version(config.data_dir, doc.current_version_id)
+        new_config = copy.deepcopy(current_version.config)
+    else:
+        from rogier.parsing.tree import DocumentConfig
+        new_config = DocumentConfig()
+
+    new_config.manual_edits[node_path] = new_content
+
+    version = create_new_version(
+        config.data_dir, doc, config=new_config, label=label,
+    )
+    return JSONResponse({"ok": True, "version_id": version.id})
 
 
 @router.post("/{doc_hash}/dismiss-warning")

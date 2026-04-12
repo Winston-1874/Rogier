@@ -122,11 +122,18 @@
         </div>
         {% endif %}
 
-        <article class="node-content">
-            <h2>{{ selected_node.label }}{% if selected_node.title %} — {{ selected_node.title }}{% endif %}</h2>
+        <article class="node-content"
+                 data-doc-hash="{{ document.hash }}"
+                 data-node-path="{{ selected_path }}"
+                 data-node-kind="{{ selected_node.kind.value }}"
+                 data-node-edited="{{ 'true' if node_edited else 'false' }}">
+            <h2>{{ selected_node.label }}{% if display_title %} — <span class="node-title-text">{{ display_title }}</span>{% endif %}</h2>
+            {% if node_edited %}
+            <span class="badge-edited" title="Ce noeud a ete modifie manuellement">Modifie</span>
+            {% endif %}
 
-            {% if selected_node.content %}
-            <div class="node-text">{{ selected_node.content }}</div>
+            {% if display_content %}
+            <div class="node-text">{{ display_content }}</div>
             {% elif selected_node.children %}
             <p class="hint">Ce noeud contient {{ selected_node.children|length }} element{{ 's' if selected_node.children|length > 1 else '' }} :</p>
             <ul class="child-list">
@@ -141,6 +148,13 @@
             </ul>
             {% else %}
             <p class="hint">Ce noeud est vide.</p>
+            {% endif %}
+
+            {% if selected_path %}
+            <div class="node-actions">
+                <button type="button" class="btn-small" id="btn-edit-node">Editer</button>
+                <a href="/document/{{ document.hash }}/versions" class="btn-small">Historique</a>
+            </div>
             {% endif %}
 
             {% if active_warnings %}
@@ -188,4 +202,5 @@
 
 {% block scripts %}
 <script src="/static/js/tree_navigation.js"></script>
+<script src="/static/js/edit_node.js"></script>
 {% endblock %}

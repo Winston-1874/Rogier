@@ -103,9 +103,9 @@ class Node:
             return self.title or "Document"
         if self.kind == NodeKind.ARTICLE:
             return f"Art. {self.number}"
-        return f"{self._kind_label()} {self.number}"
+        return f"{self.kind_label()} {self.number}"
 
-    def _kind_label(self) -> str:
+    def kind_label(self) -> str:
         return {
             NodeKind.PARTIE: "Partie",
             NodeKind.LIVRE: "Livre",
@@ -191,6 +191,10 @@ class DocumentConfig:
 
     chunking: ChunkingConfig = field(default_factory=ChunkingConfig)
     validation: ValidationConfig = field(default_factory=ValidationConfig)
+    # Modifications manuelles : clé = chemin d'index dans l'arbre
+    # ("0.2.1" = enfant 0 > enfant 2 > enfant 1), même format que le
+    # paramètre ?node= des URLs de navigation. Valeur = nouveau contenu
+    # (content pour ARTICLE, title pour les conteneurs).
     manual_edits: dict[str, str] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:

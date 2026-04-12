@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Rogier — Historique — {{ document.name }}{% endblock %}
+
+{% block content %}
+<section class="versions-page">
+    <h1>Historique des versions</h1>
+    <p class="versions-doc-name">{{ document.name }}</p>
+    <p><a href="/document/{{ document.hash }}/tree" class="btn-small">&larr; Retour a l'arbre</a></p>
+
+    {% if versions %}
+    <table class="versions-table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Label</th>
+                <th>Note</th>
+                <th>Edits</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for v in versions %}
+            <tr class="{% if v.is_active %}version-active{% endif %}">
+                <td class="versions-date">{{ v.created_at[:10] }}</td>
+                <td>
+                    {{ v.label }}
+                    {% if v.is_active %}<span class="badge-active">Active</span>{% endif %}
+                </td>
+                <td>{{ v.note or '—' }}</td>
+                <td>{{ v.edits_count }}</td>
+                <td>
+                    {% if not v.is_active %}
+                    <form method="post" action="/document/{{ document.hash }}/versions/{{ v.id }}/restore"
+                          onsubmit="return confirm('Creer une nouvelle version a partir de celle-ci ?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <button type="submit" class="btn-small">Restaurer</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="hint">Aucune version enregistree.</p>
+    {% endif %}
+</section>
+{% endblock %}

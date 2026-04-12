@@ -507,6 +507,131 @@ main:not(:has(.tree-layout)) {
     color: #888;
 }
 
+/* --- Édition inline --- */
+
+.node-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin: 0.75rem 0;
+}
+
+.edit-inline {
+    margin: 0.75rem 0;
+}
+
+.edit-textarea {
+    width: 100%;
+    min-height: 4rem;
+    padding: 0.5rem;
+    font-family: inherit;
+    font-size: 0.95rem;
+    border: 2px solid #2471a3;
+    border-radius: 4px;
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+.edit-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.btn-save {
+    background: #27ae60;
+    color: #fff;
+    border-color: #27ae60;
+}
+
+.btn-save:hover {
+    background: #229954;
+}
+
+.btn-save:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.edit-success-banner {
+    background: #d4efdf;
+    color: #1e8449;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+}
+
+.edit-error-banner {
+    background: #fadbd8;
+    color: #c0392b;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    margin-top: 0.5rem;
+}
+
+.badge-edited {
+    display: inline-block;
+    background: #eaf2f8;
+    color: #2471a3;
+    font-size: 0.75rem;
+    padding: 0.1rem 0.5rem;
+    border-radius: 3px;
+    margin-bottom: 0.5rem;
+}
+
+/* --- Page versions --- */
+
+.versions-page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+.versions-doc-name {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.versions-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.versions-table th,
+.versions-table td {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid #ddd;
+    text-align: left;
+}
+
+.versions-table th {
+    font-weight: 600;
+    background: #f7f7f7;
+}
+
+.version-active {
+    background: #eaf2f8;
+}
+
+.versions-date {
+    font-family: monospace;
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+.badge-active {
+    display: inline-block;
+    background: #27ae60;
+    color: #fff;
+    font-size: 0.7rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
+    margin-left: 0.4rem;
+    vertical-align: middle;
+}
+
 .dismissed-section summary {
     cursor: pointer;
 }

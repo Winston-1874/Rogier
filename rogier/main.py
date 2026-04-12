@@ -23,6 +23,7 @@ from rogier.routes.auth_routes import router as auth_router
 from rogier.routes.dashboard_routes import router as dashboard_router
 from rogier.routes.document_routes import router as document_router
 from rogier.routes.upload_routes import router as upload_router
+from rogier.routes.version_routes import router as version_router
 
 logger = logging.getLogger(__name__)
 
@@ -130,6 +131,7 @@ app.include_router(auth_router)
 app.include_router(dashboard_router)
 app.include_router(document_router)
 app.include_router(upload_router)
+app.include_router(version_router)
 
 
 if __name__ == "__main__":

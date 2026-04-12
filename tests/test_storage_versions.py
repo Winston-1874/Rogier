@@ -131,7 +131,9 @@ def test_create_new_version_persists_config_roundtrip(
             must_contain=["Code", "société"],
             must_not_contain=["Table des matières"],
         ),
-        manual_edits={"tree.children.0.children.0": "Nouveau contenu"},
+        # Clé = chemin d'index dans l'arbre ("0.0" = enfant 0 > enfant 0).
+        # Même format que le paramètre ?node= des URLs de navigation.
+        manual_edits={"0.0": "Nouveau contenu"},
     )
     v = create_new_version(data_dir, saved_document, config=config, label="Test")
 
@@ -141,7 +143,7 @@ def test_create_new_version_persists_config_roundtrip(
     assert stored.config.chunking.include_node_titles is False
     assert stored.config.validation.must_contain == ["Code", "société"]
     assert stored.config.validation.must_not_contain == ["Table des matières"]
-    assert stored.config.manual_edits == {"tree.children.0.children.0": "Nouveau contenu"}
+    assert stored.config.manual_edits == {"0.0": "Nouveau contenu"}
 
 
 def test_restore_version_creates_new_version_with_source_config(
