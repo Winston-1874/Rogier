@@ -178,7 +178,7 @@ def test_restore_version_creates_new_version_with_source_config(
 
 def test_load_missing_version_raises(data_dir: Path) -> None:
     with pytest.raises(StorageError, match="introuvable"):
-        load_version(data_dir, "v-inexistant")
+        load_version(data_dir, "v-000000000000")
 
 
 def test_delete_document_also_deletes_versions(data_dir: Path, saved_document: Document) -> None:

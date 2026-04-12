@@ -26,7 +26,27 @@ celle de `fetching.cache` (TTL 24h, indépendant des Documents).
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
+
+_RE_SHA256 = re.compile(r"^[0-9a-f]{64}$")
+_RE_VERSION_ID = re.compile(r"^v-[0-9a-f]{12,}$")
+
+
+def _validate_sha256(value: str, label: str) -> None:
+    """Valider qu'une chaîne est un hash SHA-256 hexadécimal."""
+    if not _RE_SHA256.fullmatch(value):
+        raise ValueError(
+            f"{label} invalide (attendu : 64 caractères hex) : {value!r}"
+        )
+
+
+def _validate_version_id(value: str) -> None:
+    """Valider qu'un version_id est au format v-<hex> (≥12 chars hex)."""
+    if not _RE_VERSION_ID.fullmatch(value):
+        raise ValueError(
+            f"version_id invalide (attendu : v-<≥12 chars hex>) : {value!r}"
+        )
 
 
 def docs_dir(data_dir: Path) -> Path:
@@ -55,16 +75,19 @@ def fetch_cache_dir(data_dir: Path) -> Path:
 
 def document_path(data_dir: Path, document_hash: str) -> Path:
     """Chemin du fichier JSON pour un Document donné."""
+    _validate_sha256(document_hash, "document_hash")
     return docs_dir(data_dir) / f"{document_hash}.json"
 
 
 def version_path(data_dir: Path, version_id: str) -> Path:
     """Chemin du fichier JSON pour une Version donnée."""
+    _validate_version_id(version_id)
     return versions_dir(data_dir) / f"{version_id}.json"
 
 
 def raw_html_path(data_dir: Path, document_hash: str) -> Path:
     """Chemin du HTML brut d'un Document dans le cache."""
+    _validate_sha256(document_hash, "document_hash")
     return raw_dir(data_dir) / f"{document_hash}.html"
 
 

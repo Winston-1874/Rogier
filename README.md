@@ -38,10 +38,6 @@ python scripts/create_admin_password_hash.py
 bash scripts/run_dev.sh
 ```
 
-## Deploiement
-
-Voir [DEPLOYMENT.md](DEPLOYMENT.md) pour le deploiement sur Ubuntu 24 avec systemd et nginx.
-
 ## Licence
 
-Ce projet est distribue sous licence GPL v3. Voir le fichier [LICENSE](LICENSE).
+Ce projet est distribue sous licence MIT. Voir le fichier [LICENSE](LICENSE).
