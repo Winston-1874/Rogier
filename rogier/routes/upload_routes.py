@@ -87,11 +87,13 @@ async def upload_submit(
 
     if upload_mode == "url":
         raw_bytes, source_url, error = await _handle_url_upload(
-            justel_url, config,
+            justel_url,
+            config,
         )
     elif upload_mode == "file":
         raw_bytes, source_filename, error = await _handle_file_upload(
-            html_file, config,
+            html_file,
+            config,
         )
     else:
         error = "Mode d'upload non reconnu."

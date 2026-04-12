@@ -31,40 +31,48 @@ def run_semantic(
     for needle in validation_config.must_contain:
         inv_id = f"must_contain:{needle}"
         if needle in full_text:
-            results.append({
-                "id": inv_id,
-                "level": 2,
-                "description": f"Le texte doit contenir « {needle} »",
-                "status": "pass",
-                "detail": f"« {needle} » trouvé dans le document.",
-            })
+            results.append(
+                {
+                    "id": inv_id,
+                    "level": 2,
+                    "description": f"Le texte doit contenir « {needle} »",
+                    "status": "pass",
+                    "detail": f"« {needle} » trouvé dans le document.",
+                }
+            )
         else:
-            results.append({
-                "id": inv_id,
-                "level": 2,
-                "description": f"Le texte doit contenir « {needle} »",
-                "status": "fail",
-                "detail": f"« {needle} » absent du document.",
-            })
+            results.append(
+                {
+                    "id": inv_id,
+                    "level": 2,
+                    "description": f"Le texte doit contenir « {needle} »",
+                    "status": "fail",
+                    "detail": f"« {needle} » absent du document.",
+                }
+            )
 
     for needle in validation_config.must_not_contain:
         inv_id = f"must_not_contain:{needle}"
         if needle not in full_text:
-            results.append({
-                "id": inv_id,
-                "level": 2,
-                "description": f"Le texte ne doit pas contenir « {needle} »",
-                "status": "pass",
-                "detail": f"« {needle} » absent du document (attendu).",
-            })
+            results.append(
+                {
+                    "id": inv_id,
+                    "level": 2,
+                    "description": f"Le texte ne doit pas contenir « {needle} »",
+                    "status": "pass",
+                    "detail": f"« {needle} » absent du document (attendu).",
+                }
+            )
         else:
-            results.append({
-                "id": inv_id,
-                "level": 2,
-                "description": f"Le texte ne doit pas contenir « {needle} »",
-                "status": "fail",
-                "detail": f"« {needle} » trouvé dans le document (interdit).",
-            })
+            results.append(
+                {
+                    "id": inv_id,
+                    "level": 2,
+                    "description": f"Le texte ne doit pas contenir « {needle} »",
+                    "status": "fail",
+                    "detail": f"« {needle} » trouvé dans le document (interdit).",
+                }
+            )
 
     return results
 

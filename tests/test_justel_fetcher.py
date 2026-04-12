@@ -90,9 +90,7 @@ def test_user_agent_format() -> None:
 
 
 @pytest.mark.asyncio
-async def test_fetch_decodes_windows1252(
-    data_dir: Path, limiter: DomainRateLimiter
-) -> None:
+async def test_fetch_decodes_windows1252(data_dir: Path, limiter: DomainRateLimiter) -> None:
     """Le contenu reçu en windows-1252 est correctement décodé en Unicode."""
     captured: dict[str, httpx.Request] = {}
 
@@ -122,9 +120,7 @@ async def test_fetch_decodes_windows1252(
 
 
 @pytest.mark.asyncio
-async def test_fetch_writes_cache_entry(
-    data_dir: Path, limiter: DomainRateLimiter
-) -> None:
+async def test_fetch_writes_cache_entry(data_dir: Path, limiter: DomainRateLimiter) -> None:
     """Après un fetch, le cache contient l'entrée et un get() la retrouve."""
 
     def handler(_: httpx.Request) -> httpx.Response:
@@ -147,9 +143,7 @@ async def test_fetch_writes_cache_entry(
 
 
 @pytest.mark.asyncio
-async def test_cache_hit_does_not_call_network(
-    data_dir: Path, limiter: DomainRateLimiter
-) -> None:
+async def test_cache_hit_does_not_call_network(data_dir: Path, limiter: DomainRateLimiter) -> None:
     """Un second fetch sur la même URL ne déclenche aucune requête HTTP."""
     call_count = 0
 
@@ -183,9 +177,7 @@ async def test_cache_hit_does_not_call_network(
 
 
 @pytest.mark.asyncio
-async def test_force_refresh_bypasses_cache(
-    data_dir: Path, limiter: DomainRateLimiter
-) -> None:
+async def test_force_refresh_bypasses_cache(data_dir: Path, limiter: DomainRateLimiter) -> None:
     """force_refresh=True déclenche une requête même si le cache est chaud."""
     call_count = 0
 
@@ -218,9 +210,7 @@ async def test_force_refresh_bypasses_cache(
 
 
 @pytest.mark.asyncio
-async def test_404_raises_french_error(
-    data_dir: Path, limiter: DomainRateLimiter
-) -> None:
+async def test_404_raises_french_error(data_dir: Path, limiter: DomainRateLimiter) -> None:
     def handler(_: httpx.Request) -> httpx.Response:
         return httpx.Response(404, content=b"Not Found")
 
@@ -237,9 +227,7 @@ async def test_404_raises_french_error(
 
 
 @pytest.mark.asyncio
-async def test_500_raises_french_error(
-    data_dir: Path, limiter: DomainRateLimiter
-) -> None:
+async def test_500_raises_french_error(data_dir: Path, limiter: DomainRateLimiter) -> None:
     def handler(_: httpx.Request) -> httpx.Response:
         return httpx.Response(503, content=b"oops")
 
@@ -256,9 +244,7 @@ async def test_500_raises_french_error(
 
 
 @pytest.mark.asyncio
-async def test_timeout_raises_french_error(
-    data_dir: Path, limiter: DomainRateLimiter
-) -> None:
+async def test_timeout_raises_french_error(data_dir: Path, limiter: DomainRateLimiter) -> None:
     def handler(_: httpx.Request) -> httpx.Response:
         raise httpx.ReadTimeout("timeout")
 

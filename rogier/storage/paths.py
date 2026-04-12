@@ -36,17 +36,13 @@ _RE_VERSION_ID = re.compile(r"^v-[0-9a-f]{12,}$")
 def _validate_sha256(value: str, label: str) -> None:
     """Valider qu'une chaîne est un hash SHA-256 hexadécimal."""
     if not _RE_SHA256.fullmatch(value):
-        raise ValueError(
-            f"{label} invalide (attendu : 64 caractères hex) : {value!r}"
-        )
+        raise ValueError(f"{label} invalide (attendu : 64 caractères hex) : {value!r}")
 
 
 def _validate_version_id(value: str) -> None:
     """Valider qu'un version_id est au format v-<hex> (≥12 chars hex)."""
     if not _RE_VERSION_ID.fullmatch(value):
-        raise ValueError(
-            f"version_id invalide (attendu : v-<≥12 chars hex>) : {value!r}"
-        )
+        raise ValueError(f"version_id invalide (attendu : v-<≥12 chars hex>) : {value!r}")
 
 
 def docs_dir(data_dir: Path) -> Path:

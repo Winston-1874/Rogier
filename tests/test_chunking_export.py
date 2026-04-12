@@ -125,9 +125,16 @@ class TestExportManifest:
         config = ChunkingConfig()
         manifest = export_manifest(doc, version, chunks, config)
         for key in (
-            "document_hash", "document_name", "source_url",
-            "exported_at", "exporter", "strategy", "parameters",
-            "stats", "version_id", "validation",
+            "document_hash",
+            "document_name",
+            "source_url",
+            "exported_at",
+            "exporter",
+            "strategy",
+            "parameters",
+            "stats",
+            "version_id",
+            "validation",
         ):
             assert key in manifest, f"Champ manquant : {key}"
 

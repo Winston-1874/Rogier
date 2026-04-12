@@ -34,14 +34,16 @@ async def version_list(
     for vref in reversed(doc.versions):
         try:
             v = load_version(config.data_dir, vref.id)
-            versions.append({
-                "id": v.id,
-                "created_at": v.created_at,
-                "label": v.label,
-                "note": v.note,
-                "is_active": v.id == doc.current_version_id,
-                "edits_count": len(v.config.manual_edits),
-            })
+            versions.append(
+                {
+                    "id": v.id,
+                    "created_at": v.created_at,
+                    "label": v.label,
+                    "note": v.note,
+                    "is_active": v.id == doc.current_version_id,
+                    "edits_count": len(v.config.manual_edits),
+                }
+            )
         except StorageError:
             logger.warning("Version %s illisible, ignorée", vref.id)
 
@@ -78,5 +80,6 @@ async def version_restore(
 
     restore_version(config.data_dir, doc, version_id)
     return RedirectResponse(
-        url=f"/document/{doc_hash}/versions", status_code=302,
+        url=f"/document/{doc_hash}/versions",
+        status_code=302,
     )

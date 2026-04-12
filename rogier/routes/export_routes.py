@@ -142,6 +142,7 @@ async def export_download(
     if version is None:
         from rogier.parsing.tree import DocumentConfig
         from rogier.parsing.tree import Version as VersionModel
+
         version = VersionModel(
             id="no-version",
             document_hash=doc.hash,
@@ -151,6 +152,7 @@ async def export_download(
         )
 
     from datetime import UTC, datetime
+
     exported_at = datetime.now(tz=UTC)
 
     md_content = export_markdown(doc, version, chunks, exported_at=exported_at)
@@ -161,8 +163,12 @@ async def export_download(
 
     # Stocker le manifest
     manifest = export_manifest(
-        doc, version, chunks, chunking_config,
-        exported_at=exported_at, validation_report=report,
+        doc,
+        version,
+        chunks,
+        chunking_config,
+        exported_at=exported_at,
+        validation_report=report,
     )
     exp_dir = storage_paths.exports_dir(config.data_dir, doc_hash)
     exp_dir.mkdir(parents=True, exist_ok=True)
@@ -180,9 +186,7 @@ async def export_download(
         content=md_content,
         media_type="text/markdown; charset=utf-8",
         headers={
-            "Content-Disposition": (
-                f"attachment; filename*=UTF-8''{filename_encoded}"
-            ),
+            "Content-Disposition": (f"attachment; filename*=UTF-8''{filename_encoded}"),
         },
     )
 

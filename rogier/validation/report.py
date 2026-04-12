@@ -19,9 +19,9 @@ class InvariantResult:
     """Résultat d'un invariant individuel."""
 
     id: str
-    level: int       # 1 (structurel) ou 2 (sémantique)
+    level: int  # 1 (structurel) ou 2 (sémantique)
     description: str
-    status: str      # 'pass' | 'fail'
+    status: str  # 'pass' | 'fail'
     detail: str
     data: dict | None = None  # champ structuré optionnel (ex: S008 count)
 
@@ -44,7 +44,7 @@ class ValidationReport:
 
     structural: list[InvariantResult] = field(default_factory=list)
     semantic: list[InvariantResult] = field(default_factory=list)
-    overall: str = "pass"     # 'pass' | 'fail'
+    overall: str = "pass"  # 'pass' | 'fail'
     generated_at: str = ""
 
     def to_dict(self) -> dict:

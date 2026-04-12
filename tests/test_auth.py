@@ -24,7 +24,7 @@ def _login(client: TestClient, password: str) -> dict[str, str]:
     # Extraire le token du <meta name="csrf-token" content="...">
     csrf_token = ""
     if 'name="csrf-token"' in dash.text:
-        start = dash.text.index('content="', dash.text.index('csrf-token')) + 9
+        start = dash.text.index('content="', dash.text.index("csrf-token")) + 9
         end = dash.text.index('"', start)
         csrf_token = dash.text[start:end]
 

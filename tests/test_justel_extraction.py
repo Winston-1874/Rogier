@@ -31,6 +31,7 @@ CSA_FULL_HTML = Path(__file__).parent.parent / "pre-app" / "Banque de données J
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _count_by_kind(node: Node) -> dict[str, int]:
     """Compter récursivement les nœuds par kind."""
     counts: dict[str, int] = {}
@@ -175,6 +176,7 @@ class TestParseSample:
 
     def test_truncated_titles_fixed(self, tree: Node) -> None:
         """Les titres 6/1 et 6/2 ont un vrai titre, pas juste '['."""
+
         def find_titres(node: Node, number: str) -> list[Node]:
             result: list[Node] = []
             if node.kind == NodeKind.TITRE and node.number == number:
@@ -186,12 +188,8 @@ class TestParseSample:
         for num in ("6/1", "6/2"):
             nodes = find_titres(tree, num)
             assert len(nodes) == 1, f"TITRE {num} introuvable"
-            assert nodes[0].title != "[", (
-                f"TITRE {num} a un titre tronqué : '{nodes[0].title}'"
-            )
-            assert len(nodes[0].title) > 5, (
-                f"TITRE {num} titre trop court : '{nodes[0].title}'"
-            )
+            assert nodes[0].title != "[", f"TITRE {num} a un titre tronqué : '{nodes[0].title}'"
+            assert len(nodes[0].title) > 5, f"TITRE {num} titre trop court : '{nodes[0].title}'"
 
     def test_articles_no_empty_content(self, tree: Node) -> None:
         """Aucun article ne devrait avoir un contenu vide dans la fixture."""
@@ -206,7 +204,6 @@ class TestParseSample:
 
 
 class TestLocateBody:
-
     def test_missing_toc_marker(self) -> None:
         with pytest.raises(JustelParseError, match="table des matières"):
             locate_body("<html><body>pas de marqueur</body></html>")
@@ -246,9 +243,7 @@ class TestCSAComplet:
         if not CSA_FULL_HTML.exists():
             pytest.skip(f"Fichier CSA complet introuvable : {CSA_FULL_HTML}")
         html = CSA_FULL_HTML.read_text(encoding="utf-8")
-        return parse_justel_html(
-            html, "Code des sociétés et des associations (CSA)"
-        )
+        return parse_justel_html(html, "Code des sociétés et des associations (CSA)")
 
     @pytest.fixture(scope="class")
     def tree(self, parsed: tuple[Node, ParsingReport]) -> Node:
@@ -299,7 +294,5 @@ class TestCSAComplet:
 
     def test_30_truncated_titles(self, report: ParsingReport) -> None:
         """30 titres extraits de marqueurs de modification."""
-        mod_warnings = [
-            w for w in report.warnings if "marqueur de modification" in w
-        ]
+        mod_warnings = [w for w in report.warnings if "marqueur de modification" in w]
         assert len(mod_warnings) == 30

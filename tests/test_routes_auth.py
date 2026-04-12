@@ -22,7 +22,7 @@ def _login(client: TestClient, password: str) -> str:
     dash = client.get("/")
     csrf_token = ""
     if 'name="csrf-token"' in dash.text:
-        start = dash.text.index('content="', dash.text.index('csrf-token')) + 9
+        start = dash.text.index('content="', dash.text.index("csrf-token")) + 9
         end = dash.text.index('"', start)
         csrf_token = dash.text[start:end]
     return csrf_token

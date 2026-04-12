@@ -35,13 +35,19 @@ def _doc(children: list[Node], warnings: list[str] | None = None) -> Node:
 
 def _simple_tree() -> Node:
     """Arbre simple : DOC > CHAPITRE > 3 articles."""
-    return _doc([
-        _container(NodeKind.CHAPITRE, "1", [
-            _article("1", "Contenu de l'article premier suffisamment long."),
-            _article("2", "Contenu de l'article deux suffisamment long aussi."),
-            _article("3", "Contenu du troisième article pour les tests."),
-        ]),
-    ])
+    return _doc(
+        [
+            _container(
+                NodeKind.CHAPITRE,
+                "1",
+                [
+                    _article("1", "Contenu de l'article premier suffisamment long."),
+                    _article("2", "Contenu de l'article deux suffisamment long aussi."),
+                    _article("3", "Contenu du troisième article pour les tests."),
+                ],
+            ),
+        ]
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -72,22 +78,34 @@ class TestS002:
         assert result["status"] == "pass"
 
     def test_fail_empty_article(self):
-        tree = _doc([
-            _container(NodeKind.CHAPITRE, "1", [
-                _article("1", ""),
-            ]),
-        ])
+        tree = _doc(
+            [
+                _container(
+                    NodeKind.CHAPITRE,
+                    "1",
+                    [
+                        _article("1", ""),
+                    ],
+                ),
+            ]
+        )
         result = check_s002(tree, {})
         assert result["status"] == "fail"
         assert "Art. 1" in result["detail"]
 
     def test_overlay_fixes_empty(self):
         """Un article vide corrigé par manual_edits → pass."""
-        tree = _doc([
-            _container(NodeKind.CHAPITRE, "1", [
-                _article("1", ""),
-            ]),
-        ])
+        tree = _doc(
+            [
+                _container(
+                    NodeKind.CHAPITRE,
+                    "1",
+                    [
+                        _article("1", ""),
+                    ],
+                ),
+            ]
+        )
         edits = {"0.0": "Contenu ajouté par édition manuelle."}
         result = check_s002(tree, edits)
         assert result["status"] == "pass"
@@ -104,21 +122,33 @@ class TestS003:
         assert result["status"] == "pass"
 
     def test_fail_short_article(self):
-        tree = _doc([
-            _container(NodeKind.CHAPITRE, "1", [
-                _article("1", "Court."),
-            ]),
-        ])
+        tree = _doc(
+            [
+                _container(
+                    NodeKind.CHAPITRE,
+                    "1",
+                    [
+                        _article("1", "Court."),
+                    ],
+                ),
+            ]
+        )
         result = check_s003(tree, {})
         assert result["status"] == "fail"
 
     def test_empty_article_not_flagged(self):
         """Un article vide n'est PAS flaggé par S003 (c'est S002)."""
-        tree = _doc([
-            _container(NodeKind.CHAPITRE, "1", [
-                _article("1", ""),
-            ]),
-        ])
+        tree = _doc(
+            [
+                _container(
+                    NodeKind.CHAPITRE,
+                    "1",
+                    [
+                        _article("1", ""),
+                    ],
+                ),
+            ]
+        )
         result = check_s003(tree, {})
         assert result["status"] == "pass"
 
@@ -134,11 +164,17 @@ class TestS004:
         assert result["status"] == "pass"
 
     def test_fail_long_article(self):
-        tree = _doc([
-            _container(NodeKind.CHAPITRE, "1", [
-                _article("1", "x" * 20_001),
-            ]),
-        ])
+        tree = _doc(
+            [
+                _container(
+                    NodeKind.CHAPITRE,
+                    "1",
+                    [
+                        _article("1", "x" * 20_001),
+                    ],
+                ),
+            ]
+        )
         result = check_s004(tree, {})
         assert result["status"] == "fail"
 
@@ -155,51 +191,79 @@ class TestS005:
 
     def test_pass_with_bis_ter(self):
         """2, 2bis, 2ter, 3 est monotone (partie entière : 2, 2, 2, 3)."""
-        tree = _doc([
-            _container(NodeKind.CHAPITRE, "1", [
-                _article("2", "Contenu suffisamment long pour le test."),
-                _article("2bis", "Contenu suffisamment long pour le test."),
-                _article("2ter", "Contenu suffisamment long pour le test."),
-                _article("3", "Contenu suffisamment long pour le test."),
-            ]),
-        ])
+        tree = _doc(
+            [
+                _container(
+                    NodeKind.CHAPITRE,
+                    "1",
+                    [
+                        _article("2", "Contenu suffisamment long pour le test."),
+                        _article("2bis", "Contenu suffisamment long pour le test."),
+                        _article("2ter", "Contenu suffisamment long pour le test."),
+                        _article("3", "Contenu suffisamment long pour le test."),
+                    ],
+                ),
+            ]
+        )
         result = check_s005(tree, {})
         assert result["status"] == "pass"
 
     def test_fail_bis_after_higher(self):
         """2, 3, 2bis → fail (le bis arrive après le 3)."""
-        tree = _doc([
-            _container(NodeKind.CHAPITRE, "1", [
-                _article("2", "Contenu suffisamment long pour le test."),
-                _article("3", "Contenu suffisamment long pour le test."),
-                _article("2bis", "Contenu suffisamment long pour le test."),
-            ]),
-        ])
+        tree = _doc(
+            [
+                _container(
+                    NodeKind.CHAPITRE,
+                    "1",
+                    [
+                        _article("2", "Contenu suffisamment long pour le test."),
+                        _article("3", "Contenu suffisamment long pour le test."),
+                        _article("2bis", "Contenu suffisamment long pour le test."),
+                    ],
+                ),
+            ]
+        )
         result = check_s005(tree, {})
         assert result["status"] == "fail"
 
     def test_fail_decreasing(self):
-        tree = _doc([
-            _container(NodeKind.CHAPITRE, "1", [
-                _article("5", "Contenu suffisamment long pour le test."),
-                _article("3", "Contenu suffisamment long pour le test."),
-            ]),
-        ])
+        tree = _doc(
+            [
+                _container(
+                    NodeKind.CHAPITRE,
+                    "1",
+                    [
+                        _article("5", "Contenu suffisamment long pour le test."),
+                        _article("3", "Contenu suffisamment long pour le test."),
+                    ],
+                ),
+            ]
+        )
         result = check_s005(tree, {})
         assert result["status"] == "fail"
 
     def test_monotone_per_container(self):
         """La monotonie est vérifiée par conteneur, pas globalement."""
-        tree = _doc([
-            _container(NodeKind.CHAPITRE, "1", [
-                _article("1", "Contenu suffisamment long pour le test."),
-                _article("2", "Contenu suffisamment long pour le test."),
-            ]),
-            _container(NodeKind.CHAPITRE, "2", [
-                _article("1", "Contenu suffisamment long pour le test."),
-                _article("2", "Contenu suffisamment long pour le test."),
-            ]),
-        ])
+        tree = _doc(
+            [
+                _container(
+                    NodeKind.CHAPITRE,
+                    "1",
+                    [
+                        _article("1", "Contenu suffisamment long pour le test."),
+                        _article("2", "Contenu suffisamment long pour le test."),
+                    ],
+                ),
+                _container(
+                    NodeKind.CHAPITRE,
+                    "2",
+                    [
+                        _article("1", "Contenu suffisamment long pour le test."),
+                        _article("2", "Contenu suffisamment long pour le test."),
+                    ],
+                ),
+            ]
+        )
         result = check_s005(tree, {})
         assert result["status"] == "pass"
 
@@ -215,12 +279,18 @@ class TestS006:
         assert result["status"] == "pass"
 
     def test_fail_duplicate(self):
-        tree = _doc([
-            _container(NodeKind.CHAPITRE, "1", [
-                _article("1", "Contenu suffisamment long pour le test."),
-                _article("1", "Autre contenu suffisamment long pour le test."),
-            ]),
-        ])
+        tree = _doc(
+            [
+                _container(
+                    NodeKind.CHAPITRE,
+                    "1",
+                    [
+                        _article("1", "Contenu suffisamment long pour le test."),
+                        _article("1", "Autre contenu suffisamment long pour le test."),
+                    ],
+                ),
+            ]
+        )
         result = check_s006(tree, {})
         assert result["status"] == "fail"
         assert "Art. 1" in result["detail"]
@@ -268,12 +338,18 @@ class TestS008:
         assert "Aucun warning" in result["detail"]
 
     def test_pass_with_warnings(self):
-        tree = _doc([
-            _container(NodeKind.CHAPITRE, "1", [
-                _article("1", "Contenu long", warnings=["Contenu court"]),
-                _article("2", "Contenu long aussi", warnings=["Titre tronqué"]),
-            ]),
-        ])
+        tree = _doc(
+            [
+                _container(
+                    NodeKind.CHAPITRE,
+                    "1",
+                    [
+                        _article("1", "Contenu long", warnings=["Contenu court"]),
+                        _article("2", "Contenu long aussi", warnings=["Titre tronqué"]),
+                    ],
+                ),
+            ]
+        )
         result = check_s008(tree, {})
         assert result["status"] == "pass"
         assert "2 warning" in result["detail"]
@@ -282,9 +358,13 @@ class TestS008:
         """collect_all_warnings récupère les warnings de tous les nœuds."""
         tree = _doc(
             [
-                _container(NodeKind.CHAPITRE, "1", [
-                    _article("1", "Contenu", warnings=["warn_a"]),
-                ]),
+                _container(
+                    NodeKind.CHAPITRE,
+                    "1",
+                    [
+                        _article("1", "Contenu", warnings=["warn_a"]),
+                    ],
+                ),
             ],
             warnings=["warn_root"],
         )
@@ -295,11 +375,17 @@ class TestS008:
 
     def test_data_count_field(self):
         """S008 retourne un champ data.count structuré."""
-        tree = _doc([
-            _container(NodeKind.CHAPITRE, "1", [
-                _article("1", "Contenu long", warnings=["w1", "w2"]),
-            ]),
-        ])
+        tree = _doc(
+            [
+                _container(
+                    NodeKind.CHAPITRE,
+                    "1",
+                    [
+                        _article("1", "Contenu long", warnings=["w1", "w2"]),
+                    ],
+                ),
+            ]
+        )
         result = check_s008(tree, {})
         assert result["data"]["count"] == 2
 

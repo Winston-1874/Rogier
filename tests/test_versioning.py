@@ -27,7 +27,7 @@ def _login(client: TestClient, password: str) -> str:
     dash = client.get("/")
     csrf_token = ""
     if 'name="csrf-token"' in dash.text:
-        start = dash.text.index('content="', dash.text.index('csrf-token')) + 9
+        start = dash.text.index('content="', dash.text.index("csrf-token")) + 9
         end = dash.text.index('"', start)
         csrf_token = dash.text[start:end]
     return csrf_token
@@ -56,7 +56,8 @@ def _upload_sample(client: TestClient, csrf: str) -> str:
 
 @pytest.mark.slow
 def test_edit_article_creates_version(
-    client: TestClient, test_password: str,
+    client: TestClient,
+    test_password: str,
 ) -> None:
     """POST /document/{hash}/node/edit sur un article crée une version."""
     csrf = _login(client, test_password)
@@ -78,10 +79,12 @@ def test_edit_article_creates_version(
     # Éditer via AJAX
     edit_resp = client.post(
         f"/document/{doc_hash}/node/edit",
-        content=json.dumps({
-            "node_path": "0",
-            "new_content": "Contenu modifie pour test",
-        }),
+        content=json.dumps(
+            {
+                "node_path": "0",
+                "new_content": "Contenu modifie pour test",
+            }
+        ),
         headers={
             "Content-Type": "application/json",
             "X-CSRF-Token": csrf,
@@ -95,7 +98,8 @@ def test_edit_article_creates_version(
 
 @pytest.mark.slow
 def test_edit_article_overlay_displayed(
-    client: TestClient, test_password: str,
+    client: TestClient,
+    test_password: str,
 ) -> None:
     """Après édition, le contenu modifié est affiché dans l'arbre."""
     csrf = _login(client, test_password)
@@ -104,10 +108,12 @@ def test_edit_article_overlay_displayed(
     # Éditer le noeud "0" (premier enfant de la racine = conteneur)
     client.post(
         f"/document/{doc_hash}/node/edit",
-        content=json.dumps({
-            "node_path": "0",
-            "new_content": "Titre modifie test overlay",
-        }),
+        content=json.dumps(
+            {
+                "node_path": "0",
+                "new_content": "Titre modifie test overlay",
+            }
+        ),
         headers={
             "Content-Type": "application/json",
             "X-CSRF-Token": csrf,
@@ -123,7 +129,8 @@ def test_edit_article_overlay_displayed(
 
 @pytest.mark.slow
 def test_edit_missing_node_returns_404(
-    client: TestClient, test_password: str,
+    client: TestClient,
+    test_password: str,
 ) -> None:
     """Éditer un noeud inexistant retourne 404."""
     csrf = _login(client, test_password)
@@ -131,10 +138,12 @@ def test_edit_missing_node_returns_404(
 
     resp = client.post(
         f"/document/{doc_hash}/node/edit",
-        content=json.dumps({
-            "node_path": "99.99.99",
-            "new_content": "nope",
-        }),
+        content=json.dumps(
+            {
+                "node_path": "99.99.99",
+                "new_content": "nope",
+            }
+        ),
         headers={
             "Content-Type": "application/json",
             "X-CSRF-Token": csrf,
@@ -145,7 +154,8 @@ def test_edit_missing_node_returns_404(
 
 @pytest.mark.slow
 def test_edit_without_csrf_returns_403(
-    client: TestClient, test_password: str,
+    client: TestClient,
+    test_password: str,
 ) -> None:
     """Éditer sans CSRF retourne 403."""
     csrf = _login(client, test_password)
@@ -153,10 +163,12 @@ def test_edit_without_csrf_returns_403(
 
     resp = client.post(
         f"/document/{doc_hash}/node/edit",
-        content=json.dumps({
-            "node_path": "0",
-            "new_content": "nope",
-        }),
+        content=json.dumps(
+            {
+                "node_path": "0",
+                "new_content": "nope",
+            }
+        ),
         headers={
             "Content-Type": "application/json",
             "X-CSRF-Token": "invalid-token",
@@ -167,7 +179,8 @@ def test_edit_without_csrf_returns_403(
 
 @pytest.mark.slow
 def test_edit_real_article_label(
-    client: TestClient, test_password: str,
+    client: TestClient,
+    test_password: str,
 ) -> None:
     """Éditer un vrai ARTICLE produit un label 'Édition manuelle Art. X'."""
     csrf = _login(client, test_password)
@@ -186,10 +199,12 @@ def test_edit_real_article_label(
 
     edit_resp = client.post(
         f"/document/{doc_hash}/node/edit",
-        content=json.dumps({
-            "node_path": article_path,
-            "new_content": "Contenu article test",
-        }),
+        content=json.dumps(
+            {
+                "node_path": article_path,
+                "new_content": "Contenu article test",
+            }
+        ),
         headers={
             "Content-Type": "application/json",
             "X-CSRF-Token": csrf,
@@ -209,7 +224,8 @@ def test_edit_real_article_label(
 
 @pytest.mark.slow
 def test_version_list_shows_versions(
-    client: TestClient, test_password: str,
+    client: TestClient,
+    test_password: str,
 ) -> None:
     """La page versions affiche l'historique."""
     csrf = _login(client, test_password)
@@ -237,7 +253,8 @@ def test_version_list_shows_versions(
 
 @pytest.mark.slow
 def test_restore_version_creates_new_version(
-    client: TestClient, test_password: str,
+    client: TestClient,
+    test_password: str,
 ) -> None:
     """Restaurer une version crée une nouvelle version."""
     csrf = _login(client, test_password)
@@ -248,8 +265,9 @@ def test_restore_version_creates_new_version(
     # Extraire l'ID de la version initiale depuis le HTML
     # Le formulaire restore contient l'ID dans l'action URL
     import re
+
     restore_urls = re.findall(
-        rf'/document/{doc_hash}/versions/(v-[a-f0-9]+)/restore',
+        rf"/document/{doc_hash}/versions/(v-[a-f0-9]+)/restore",
         resp.text,
     )
 
@@ -263,7 +281,7 @@ def test_restore_version_creates_new_version(
     # Maintenant la page versions a un bouton Restaurer pour l'initiale
     resp = client.get(f"/document/{doc_hash}/versions")
     restore_urls = re.findall(
-        rf'/document/{doc_hash}/versions/(v-[a-f0-9]+)/restore',
+        rf"/document/{doc_hash}/versions/(v-[a-f0-9]+)/restore",
         resp.text,
     )
     assert len(restore_urls) >= 1

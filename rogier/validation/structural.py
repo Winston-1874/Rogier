@@ -34,7 +34,9 @@ def _extract_leading_int(number: str) -> int | None:
 
 
 def _pass(
-    invariant_id: str, description: str, detail: str,
+    invariant_id: str,
+    description: str,
+    detail: str,
     data: dict | None = None,
 ) -> dict:
     result = {
@@ -50,7 +52,9 @@ def _pass(
 
 
 def _fail(
-    invariant_id: str, description: str, detail: str,
+    invariant_id: str,
+    description: str,
+    detail: str,
     data: dict | None = None,
 ) -> dict:
     result = {
@@ -106,7 +110,8 @@ def check_s003(root: Node, manual_edits: dict[str, str]) -> dict:
             short.append(f"{label} ({len(content.strip())} car.)")
     if not short:
         return _pass(
-            "S003", "Longueur minimale des articles (≥ 20 car.)",
+            "S003",
+            "Longueur minimale des articles (≥ 20 car.)",
             "Aucun article trop court.",
         )
     return _fail(
@@ -127,7 +132,8 @@ def check_s004(root: Node, manual_edits: dict[str, str]) -> dict:
             long.append(f"{label} ({len(content)} car.)")
     if not long:
         return _pass(
-            "S004", "Longueur maximale des articles (≤ 20 000 car.)",
+            "S004",
+            "Longueur maximale des articles (≤ 20 000 car.)",
             "Aucun article trop long.",
         )
     return _fail(
@@ -151,7 +157,8 @@ def check_s005(root: Node, manual_edits: dict[str, str]) -> dict:
     _check_monotone_recursive(root, "", violations)
     if not violations:
         return _pass(
-            "S005", "Numérotation monotone des articles",
+            "S005",
+            "Numérotation monotone des articles",
             "Numérotation cohérente dans tous les conteneurs.",
         )
     return _fail(
@@ -239,7 +246,8 @@ def check_s008(root: Node, manual_edits: dict[str, str]) -> dict:
     count = len(all_warnings)
     if count == 0:
         return _pass(
-            "S008", "Warnings de parsing référencés",
+            "S008",
+            "Warnings de parsing référencés",
             "Aucun warning de parsing dans l'arbre.",
             data={"count": 0},
         )

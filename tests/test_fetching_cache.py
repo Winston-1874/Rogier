@@ -58,9 +58,7 @@ def test_put_writes_html_and_sidecar_files(data_dir: Path) -> None:
     put(data_dir, URL, HTML)
     cache_dir = paths.fetch_cache_dir(data_dir)
     # On ignore les lockfiles `.{name}.lock` laissés par locks.locked_write.
-    real_files = sorted(
-        p.name for p in cache_dir.iterdir() if not p.name.startswith(".")
-    )
+    real_files = sorted(p.name for p in cache_dir.iterdir() if not p.name.startswith("."))
     assert len(real_files) == 2
     assert any(f.endswith(".html") for f in real_files)
     assert any(f.endswith(".json") for f in real_files)

@@ -133,7 +133,7 @@ def chunk_hybrid(
         article_chunks: list[Chunk] = []
 
         # Texte avant le premier § (intro)
-        intro = content[:splits[0].start()].strip()
+        intro = content[: splits[0].start()].strip()
         if intro:
             article_chunks.append(Chunk(breadcrumb=bc, content=intro))
 
@@ -152,9 +152,13 @@ def chunk_hybrid(
                     f"dépasse la taille max ({len(para_content)} car.)."
                 )
 
-            article_chunks.append(Chunk(
-                breadcrumb=sub_bc, content=para_content, warnings=para_warnings,
-            ))
+            article_chunks.append(
+                Chunk(
+                    breadcrumb=sub_bc,
+                    content=para_content,
+                    warnings=para_warnings,
+                )
+            )
 
         chunks.extend(article_chunks)
 

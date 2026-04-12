@@ -38,13 +38,15 @@ async def dashboard(
 
     doc_rows = []
     for doc in documents:
-        doc_rows.append({
-            "hash": doc.hash,
-            "name": doc.name,
-            "family": doc.family,
-            "article_count": _count_articles(doc.tree),
-            "created_at": doc.created_at,
-        })
+        doc_rows.append(
+            {
+                "hash": doc.hash,
+                "name": doc.name,
+                "family": doc.family,
+                "article_count": _count_articles(doc.tree),
+                "created_at": doc.created_at,
+            }
+        )
 
     return templates.TemplateResponse(
         request,

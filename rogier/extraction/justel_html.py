@@ -46,9 +46,7 @@ _LEVEL_TO_KIND: dict[str, NodeKind] = {
 
 # Toute ancre, hiérarchique (LNK\d+) ou article (Art.X)
 # Supporte guillemets doubles et simples, balises majuscules et minuscules.
-RE_ANY_ANCHOR = re.compile(
-    r"""<[aA]\s+[nN][aA][mM][eE]=['"](LNK\d+|Art\.[^'"]+)['"]"""
-)
+RE_ANY_ANCHOR = re.compile(r"""<[aA]\s+[nN][aA][mM][eE]=['"](LNK\d+|Art\.[^'"]+)['"]""")
 
 # Entrée hiérarchique.
 # IMPORTANT : Sous-section avant Section pour éviter le match préfixe.
@@ -76,6 +74,7 @@ RE_UNKNOWN_ENTITY = re.compile(r"&[a-zA-Z]+;|&#\d+;")
 # Entrée brute (avant placement dans l'arbre)
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class RawEntry:
     """Entrée extraite linéairement du HTML."""
@@ -93,6 +92,7 @@ class RawEntry:
 # Rapport de parsing
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class ParsingReport:
     """Rapport global retourné à côté du Document."""
@@ -106,6 +106,7 @@ class ParsingReport:
 # ---------------------------------------------------------------------------
 # Extraction
 # ---------------------------------------------------------------------------
+
 
 def _find_case_insensitive(html: str, candidates: list[str], start: int = 0) -> int:
     """Chercher la première occurrence parmi plusieurs variantes."""
@@ -124,22 +125,29 @@ def locate_body(html: str) -> str:
     Supporte les deux formats : navigateur (minuscules, guillemets doubles)
     et serveur Justel brut (majuscules, guillemets simples).
     """
-    toc_marker = _find_case_insensitive(html, [
-        'id="list-title-2"',
-        "id='list-title-2'",
-    ])
+    toc_marker = _find_case_insensitive(
+        html,
+        [
+            'id="list-title-2"',
+            "id='list-title-2'",
+        ],
+    )
     if toc_marker == -1:
         raise JustelParseError(
             'Marqueur de table des matières (id="list-title-2") introuvable '
             "dans le HTML. Le format du fichier est peut-être inattendu."
         )
 
-    body_start = _find_case_insensitive(html, [
-        '<a name="LNK0001"',
-        "<a name='LNK0001'",
-        '<A NAME="LNK0001"',
-        "<A NAME='LNK0001'",
-    ], toc_marker + 1000)
+    body_start = _find_case_insensitive(
+        html,
+        [
+            '<a name="LNK0001"',
+            "<a name='LNK0001'",
+            '<A NAME="LNK0001"',
+            "<A NAME='LNK0001'",
+        ],
+        toc_marker + 1000,
+    )
     if body_start == -1:
         raise JustelParseError(
             "Ancre de début du corps (LNK0001) introuvable après la table "
@@ -285,12 +293,10 @@ def _extract_entries(body: str) -> list[RawEntry]:
                 header_end = raw.find("\n", m.end())
                 if header_end == -1:
                     header_end = min(len(raw), m.end() + 1000)
-                extracted = _extract_mod_title(raw[: header_end])
+                extracted = _extract_mod_title(raw[:header_end])
                 if extracted:
                     title = extracted
-                    entry_warnings = [
-                        "Titre extrait d'un marqueur de modification"
-                    ]
+                    entry_warnings = ["Titre extrait d'un marqueur de modification"]
                 else:
                     entry_warnings = []
             else:
@@ -307,7 +313,7 @@ def _extract_entries(body: str) -> list[RawEntry]:
                 )
             )
         else:
-            number = name[len("Art."):]
+            number = name[len("Art.") :]
             content_start = _find_article_content_start(raw)
             content = _clean_content(raw[content_start:])
             entries.append(
@@ -373,9 +379,7 @@ def _build_tree(entries: list[RawEntry], doc_title: str) -> Node:
             unknown = RE_UNKNOWN_ENTITY.findall(content)
             if unknown:
                 unique = sorted(set(unknown))
-                metadata.warnings.append(
-                    f"Entité HTML non reconnue : {', '.join(unique)}"
-                )
+                metadata.warnings.append(f"Entité HTML non reconnue : {', '.join(unique)}")
 
             node = Node(
                 kind=NodeKind.ARTICLE,
@@ -420,6 +424,7 @@ def _collect_warnings(node: Node) -> list[str]:
 # API publique
 # ---------------------------------------------------------------------------
 
+
 def parse_justel_html(html: str, doc_title: str = "") -> tuple[Node, ParsingReport]:
     """Parser un HTML Justel complet et retourner l'arbre + rapport.
 
@@ -450,9 +455,7 @@ def parse_justel_html(html: str, doc_title: str = "") -> tuple[Node, ParsingRepo
 
     report = ParsingReport(
         total_articles=counts.get("ARTICLE", 0),
-        total_hierarchy=sum(
-            v for k, v in counts.items() if k not in ("DOCUMENT", "ARTICLE")
-        ),
+        total_hierarchy=sum(v for k, v in counts.items() if k not in ("DOCUMENT", "ARTICLE")),
         warnings=all_warnings,
         counts_by_kind=counts,
     )

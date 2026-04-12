@@ -27,7 +27,7 @@ def _login(client: TestClient, password: str) -> str:
     dash = client.get("/")
     csrf_token = ""
     if 'name="csrf-token"' in dash.text:
-        start = dash.text.index('content="', dash.text.index('csrf-token')) + 9
+        start = dash.text.index('content="', dash.text.index("csrf-token")) + 9
         end = dash.text.index('"', start)
         csrf_token = dash.text[start:end]
     return csrf_token
@@ -74,9 +74,7 @@ def test_upload_fichier_trop_gros(client: TestClient, test_password: str) -> Non
     # Générer un fichier HTML factice contenant les marqueurs mais trop gros
     content = (
         '<html><body><a href="change_lg.pl">link</a>'
-        '<span class="list-title-2">t</span>'
-        + "x" * (11 * 1024 * 1024)
-        + "</body></html>"
+        '<span class="list-title-2">t</span>' + "x" * (11 * 1024 * 1024) + "</body></html>"
     )
 
     response = client.post(

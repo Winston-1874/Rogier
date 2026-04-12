@@ -112,7 +112,8 @@ def export_manifest(
         "stats": stats,
         "version_id": version.id,
         "validation": _build_validation_block(
-            validation_report, all_warnings,
+            validation_report,
+            all_warnings,
         ),
     }
 

@@ -19,12 +19,20 @@ def _doc(children: list[Node]) -> Node:
 
 def _simple_tree() -> Node:
     """Arbre avec contenu contenant « 61 500 » et « Code des sociétés »."""
-    return _doc([
-        Node(kind=NodeKind.CHAPITRE, number="1", children=[
-            _article("1", "Le seuil est fixé à 61 500 euros conformément au Code des sociétés."),
-            _article("2", "Les administrateurs veillent au respect de la présente loi."),
-        ]),
-    ])
+    return _doc(
+        [
+            Node(
+                kind=NodeKind.CHAPITRE,
+                number="1",
+                children=[
+                    _article(
+                        "1", "Le seuil est fixé à 61 500 euros conformément au Code des sociétés."
+                    ),
+                    _article("2", "Les administrateurs veillent au respect de la présente loi."),
+                ],
+            ),
+        ]
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -143,18 +151,22 @@ class TestBuildReport:
         """S008 data.count matches the actual warning count in the tree."""
         from rogier.parsing.tree import NodeMetadata
 
-        tree = _doc([
-            Node(
-                kind=NodeKind.CHAPITRE, number="1",
-                children=[
-                    Node(
-                        kind=NodeKind.ARTICLE, number="1",
-                        content="Contenu long suffisant pour les tests.",
-                        metadata=NodeMetadata(warnings=["warn_a", "warn_b"]),
-                    ),
-                ],
-            ),
-        ])
+        tree = _doc(
+            [
+                Node(
+                    kind=NodeKind.CHAPITRE,
+                    number="1",
+                    children=[
+                        Node(
+                            kind=NodeKind.ARTICLE,
+                            number="1",
+                            content="Contenu long suffisant pour les tests.",
+                            metadata=NodeMetadata(warnings=["warn_a", "warn_b"]),
+                        ),
+                    ],
+                ),
+            ]
+        )
         report = build_report(tree)
         s008 = next(r for r in report.structural if r.id == "S008")
         assert s008.status == "pass"

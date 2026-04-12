@@ -142,8 +142,7 @@ async def fetch_justel_url(
             response = await client.get(url, headers=headers)
         except httpx.TimeoutException as e:
             raise JustelFetchError(
-                "Le serveur Justel n'a pas répondu dans les temps. "
-                "Réessayez dans quelques minutes."
+                "Le serveur Justel n'a pas répondu dans les temps. Réessayez dans quelques minutes."
             ) from e
         except httpx.HTTPError as e:
             raise JustelFetchError(

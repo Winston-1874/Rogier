@@ -125,5 +125,5 @@ def exit_on_config_error() -> AppConfig:
     try:
         return load_config()
     except ConfigError as e:
-        print(str(e), file=sys.stderr)
+        sys.stderr.write(str(e) + "\n")
         sys.exit(1)

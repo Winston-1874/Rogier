@@ -22,7 +22,7 @@ def _login(client: TestClient, password: str) -> str:
     dash = client.get("/")
     csrf_token = ""
     if 'name="csrf-token"' in dash.text:
-        start = dash.text.index('content="', dash.text.index('csrf-token')) + 9
+        start = dash.text.index('content="', dash.text.index("csrf-token")) + 9
         end = dash.text.index('"', start)
         csrf_token = dash.text[start:end]
     return csrf_token
@@ -124,7 +124,8 @@ def test_export_manifest_available(client: TestClient, test_password: str) -> No
 
 @pytest.mark.slow
 def test_export_page_shows_validation_report(
-    client: TestClient, test_password: str,
+    client: TestClient,
+    test_password: str,
 ) -> None:
     """T1 : la page export affiche le rapport de validation structurel."""
     csrf = _login(client, test_password)
@@ -140,7 +141,8 @@ def test_export_page_shows_validation_report(
 
 @pytest.mark.slow
 def test_save_validation_config_persists(
-    client: TestClient, test_password: str,
+    client: TestClient,
+    test_password: str,
 ) -> None:
     """T3 : POST /export/validation persiste la ValidationConfig."""
     csrf = _login(client, test_password)
