@@ -10,11 +10,16 @@
 </p>
 
 {# ------------------------------------------------------------------ #}
-{# Section 1 — Stratégie de chunking                                  #}
+{# Formulaire unique : chunking (section 1) + export (section 4)      #}
+{# Les sections 2 et 3 sont hors du form (lecture seule ou form dédié) #}
 {# ------------------------------------------------------------------ #}
 
 <form method="post" action="/document/{{ document.hash }}/export" id="export-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+    {# -------------------------------------------------------------- #}
+    {# Section 1 — Stratégie de chunking                              #}
+    {# -------------------------------------------------------------- #}
 
     <section class="export-section">
         <h2>Stratégie de chunking</h2>
@@ -61,23 +66,9 @@
         </details>
     </section>
 
-    {# ------------------------------------------------------------------ #}
-    {# Sections 2-3 — Validation (Phase 7)                                #}
-    {# ------------------------------------------------------------------ #}
-
-    <section class="export-section export-placeholder">
-        <h2>Invariants sémantiques</h2>
-        <p class="placeholder-text">La validation des invariants sera disponible dans une prochaine version.</p>
-    </section>
-
-    <section class="export-section export-placeholder">
-        <h2>Rapport de validation</h2>
-        <p class="placeholder-text">Le rapport de validation sera disponible dans une prochaine version.</p>
-    </section>
-
-    {# ------------------------------------------------------------------ #}
-    {# Section 4 — Export                                                  #}
-    {# ------------------------------------------------------------------ #}
+    {# -------------------------------------------------------------- #}
+    {# Section 4 — Export (dans le même form que section 1)            #}
+    {# -------------------------------------------------------------- #}
 
     <section class="export-section">
         <h2>Export</h2>
@@ -90,4 +81,74 @@
         <button type="submit" class="btn btn-primary btn-large">Exporter en Markdown</button>
     </section>
 </form>
+
+<script>
+// Empêcher la soumission implicite du formulaire d'export quand
+// l'utilisateur appuie sur Entrée dans un champ de paramétrage.
+// Seul le clic sur le bouton Export déclenche le téléchargement.
+document.getElementById("export-form").addEventListener("keydown", function(e) {
+    if (e.key === "Enter" && e.target.tagName !== "BUTTON") {
+        e.preventDefault();
+    }
+});
+</script>
+
+{# ------------------------------------------------------------------ #}
+{# Section 2 — Invariants sémantiques (form séparé)                   #}
+{# ------------------------------------------------------------------ #}
+
+<form method="post" action="/document/{{ document.hash }}/export/validation" class="export-section">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <h2>Invariants sémantiques</h2>
+
+    <p class="section-help">Vérifications sur le contenu du document. Une entrée par ligne.</p>
+
+    <div class="param-grid">
+        <label for="must_contain">Doit contenir :</label>
+        <textarea id="must_contain" name="must_contain" rows="3" placeholder="61 500&#10;Art. 1:1">{{ validation_config.must_contain | join('\n') }}</textarea>
+
+        <label for="must_not_contain">Ne doit pas contenir :</label>
+        <textarea id="must_not_contain" name="must_not_contain" rows="3" placeholder="Table des matières">{{ validation_config.must_not_contain | join('\n') }}</textarea>
+    </div>
+
+    <button type="submit" class="btn btn-small">Enregistrer et valider</button>
+</form>
+
+{# ------------------------------------------------------------------ #}
+{# Section 3 — Rapport de validation (lecture seule)                   #}
+{# ------------------------------------------------------------------ #}
+
+<section class="export-section">
+    <h2>Rapport de validation</h2>
+
+    {% if report.overall == 'pass' %}
+    <p class="validation-overall validation-pass">Tous les invariants sont satisfaits.</p>
+    {% else %}
+    <p class="validation-overall validation-fail">Un ou plusieurs invariants ont échoué.</p>
+    {% endif %}
+
+    <h3>Invariants structurels</h3>
+    <ul class="validation-list">
+    {% for r in report.structural %}
+        <li class="validation-item validation-{{ r.status }}">
+            <span class="validation-icon">{% if r.status == 'pass' %}&#10003;{% else %}&#10007;{% endif %}</span>
+            <strong>{{ r.id }}</strong> — {{ r.description }}
+            <br><span class="validation-detail">{{ r.detail }}</span>
+        </li>
+    {% endfor %}
+    </ul>
+
+    {% if report.semantic %}
+    <h3>Invariants sémantiques</h3>
+    <ul class="validation-list">
+    {% for r in report.semantic %}
+        <li class="validation-item validation-{{ r.status }}">
+            <span class="validation-icon">{% if r.status == 'pass' %}&#10003;{% else %}&#10007;{% endif %}</span>
+            {{ r.description }}
+            <br><span class="validation-detail">{{ r.detail }}</span>
+        </li>
+    {% endfor %}
+    </ul>
+    {% endif %}
+</section>
 {% endblock %}

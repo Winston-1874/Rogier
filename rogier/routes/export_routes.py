@@ -7,16 +7,17 @@ import logging
 from urllib.parse import quote
 
 from fastapi import APIRouter, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse, JSONResponse, Response
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 
 from rogier.chunking.export import export_manifest, export_markdown
 from rogier.chunking.strategies import chunk_hybrid, chunk_per_article
 from rogier.csrf import check_csrf_token
 from rogier.dependencies import AuthDep, ConfigDep, TemplatesDep
-from rogier.parsing.tree import ChunkingConfig
+from rogier.parsing.tree import ChunkingConfig, ValidationConfig
 from rogier.storage import paths as storage_paths
 from rogier.storage.documents import load_document
-from rogier.storage.versions import load_version
+from rogier.storage.versions import load_version, save_version
+from rogier.validation.report import build_report
 
 logger = logging.getLogger(__name__)
 
@@ -61,14 +62,19 @@ async def export_page(
     # Version active pour overlay et config
     manual_edits: dict[str, str] = {}
     chunking_config = ChunkingConfig()
+    validation_config = ValidationConfig()
     if doc.current_version_id:
         version = load_version(config.data_dir, doc.current_version_id)
         manual_edits = version.config.manual_edits
         chunking_config = version.config.chunking
+        validation_config = version.config.validation
 
     # Preview avec la config par défaut
     chunks = _run_chunking(doc.tree, chunking_config, manual_edits)
     estimated_size = sum(len(c.content) for c in chunks)
+
+    # Rapport de validation
+    report = build_report(doc.tree, validation_config, manual_edits)
 
     return templates.TemplateResponse(
         request,
@@ -82,6 +88,8 @@ async def export_page(
             "include_node_titles": chunking_config.include_node_titles,
             "total_chunks": len(chunks),
             "estimated_size": estimated_size,
+            "validation_config": validation_config,
+            "report": report,
             "csrf_token": csrf_token,
             "authenticated": True,
         },
@@ -147,8 +155,15 @@ async def export_download(
 
     md_content = export_markdown(doc, version, chunks, exported_at=exported_at)
 
+    # Rapport de validation pour le manifest
+    validation_config = version.config.validation
+    report = build_report(doc.tree, validation_config, manual_edits)
+
     # Stocker le manifest
-    manifest = export_manifest(doc, version, chunks, chunking_config, exported_at=exported_at)
+    manifest = export_manifest(
+        doc, version, chunks, chunking_config,
+        exported_at=exported_at, validation_report=report,
+    )
     exp_dir = storage_paths.exports_dir(config.data_dir, doc_hash)
     exp_dir.mkdir(parents=True, exist_ok=True)
     manifest_path = exp_dir / "manifest.json"
@@ -169,6 +184,47 @@ async def export_download(
                 f"attachment; filename*=UTF-8''{filename_encoded}"
             ),
         },
+    )
+
+
+@router.post("/{doc_hash}/export/validation")
+async def save_validation_config(
+    request: Request,
+    doc_hash: str,
+    config: ConfigDep,
+    csrf_token: AuthDep,
+    form_csrf: str = Form(None, alias="csrf_token"),
+    must_contain: str = Form(""),
+    must_not_contain: str = Form(""),
+) -> RedirectResponse:
+    """Sauvegarder les invariants sémantiques et recharger la page export.
+
+    Mute la ValidationConfig de la version active sans créer de nouvelle
+    version — la ValidationConfig est une configuration d'affichage,
+    pas du contenu versionnable (cohérent avec l'approche append-only
+    du projet pour le contenu uniquement).
+    """
+    check_csrf_token(form_csrf, csrf_token)
+
+    doc = load_document(config.data_dir, doc_hash)
+    if not doc.current_version_id:
+        raise HTTPException(status_code=400, detail="Aucune version active.")
+
+    version = load_version(config.data_dir, doc.current_version_id)
+
+    # Parser les listes (une entrée par ligne, ignorer les lignes vides)
+    mc = [s.strip() for s in must_contain.splitlines() if s.strip()]
+    mnc = [s.strip() for s in must_not_contain.splitlines() if s.strip()]
+
+    version.config.validation = ValidationConfig(
+        must_contain=mc,
+        must_not_contain=mnc,
+    )
+    save_version(config.data_dir, version)
+
+    return RedirectResponse(
+        url=f"/document/{doc_hash}/export",
+        status_code=302,
     )
 
 

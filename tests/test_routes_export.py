@@ -116,3 +116,51 @@ def test_export_manifest_available(client: TestClient, test_password: str) -> No
     assert manifest["stats"]["total_chunks"] == 336
     assert manifest["strategy"] == "per_article"
     assert manifest["document_hash"] == doc_hash
+    # B4 : le manifest contient la validation réelle, pas "pending"
+    assert manifest["validation"]["overall"] in ("pass", "fail")
+    assert isinstance(manifest["validation"]["structural"], list)
+    assert len(manifest["validation"]["structural"]) == 8
+
+
+@pytest.mark.slow
+def test_export_page_shows_validation_report(
+    client: TestClient, test_password: str,
+) -> None:
+    """T1 : la page export affiche le rapport de validation structurel."""
+    csrf = _login(client, test_password)
+    doc_hash = _upload_csa(client, csrf)
+
+    response = client.get(f"/document/{doc_hash}/export")
+    assert response.status_code == 200
+    assert "Rapport de validation" in response.text
+    assert "S001" in response.text
+    # Invariants structurels du CSA sample → tous pass (coche verte)
+    assert "&#10003;" in response.text
+
+
+@pytest.mark.slow
+def test_save_validation_config_persists(
+    client: TestClient, test_password: str,
+) -> None:
+    """T3 : POST /export/validation persiste la ValidationConfig."""
+    csrf = _login(client, test_password)
+    doc_hash = _upload_csa(client, csrf)
+
+    # Sauvegarder des invariants sémantiques
+    response = client.post(
+        f"/document/{doc_hash}/export/validation",
+        data={
+            "csrf_token": csrf,
+            "must_contain": "61 500\nCode des sociétés",
+            "must_not_contain": "Table des matières",
+        },
+        follow_redirects=False,
+    )
+    assert response.status_code == 302
+
+    # Recharger la page et vérifier que les valeurs sont pré-remplies
+    page = client.get(f"/document/{doc_hash}/export")
+    assert "61 500" in page.text
+    assert "Table des matières" in page.text
+    # Les invariants sémantiques apparaissent dans le rapport
+    assert "must_contain" in page.text

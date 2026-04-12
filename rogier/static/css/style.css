@@ -734,6 +734,71 @@ main:not(:has(.tree-layout)) {
     margin-bottom: 1.5rem;
 }
 
+/* ---- Validation (Phase 7) ---- */
+
+.validation-overall {
+    padding: 0.6rem 1rem;
+    border-radius: 4px;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.validation-pass {
+    background: #eafaf1;
+    color: #1e8449;
+    border-left: 4px solid #27ae60;
+}
+
+.validation-fail {
+    background: #fdedec;
+    color: #922b21;
+    border-left: 4px solid #e74c3c;
+}
+
+.validation-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.validation-item {
+    padding: 0.4rem 0.6rem;
+    margin-bottom: 0.3rem;
+    border-radius: 3px;
+}
+
+.validation-item.validation-pass {
+    background: #f0faf4;
+}
+
+.validation-item.validation-fail {
+    background: #fdf0ef;
+}
+
+.validation-icon {
+    font-weight: bold;
+    margin-right: 0.4rem;
+}
+
+.validation-item.validation-pass .validation-icon {
+    color: #27ae60;
+}
+
+.validation-item.validation-fail .validation-icon {
+    color: #e74c3c;
+}
+
+.validation-detail {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.section-help {
+    font-size: 0.85rem;
+    color: #888;
+    margin-bottom: 0.8rem;
+}
+
 /* Pied de page */
 footer {
     text-align: center;

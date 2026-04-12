@@ -63,10 +63,13 @@ def export_manifest(
     config: ChunkingConfig,
     *,
     exported_at: datetime | None = None,
+    validation_report: Any | None = None,
 ) -> dict[str, Any]:
     """Générer le manifest JSON conforme au §10.5.
 
     Retourne un dict sérialisable en JSON.
+    Si validation_report (ValidationReport) est fourni, ses résultats
+    remplacent les placeholders "pending".
     """
     sizes = [len(c.content) for c in chunks]
 
@@ -108,9 +111,27 @@ def export_manifest(
         },
         "stats": stats,
         "version_id": version.id,
-        "validation": {
-            "structural": "pending",
-            "semantic": "pending",
-            "warnings": all_warnings,
-        },
+        "validation": _build_validation_block(
+            validation_report, all_warnings,
+        ),
+    }
+
+
+def _build_validation_block(
+    report: Any | None,
+    chunk_warnings: list[str],
+) -> dict[str, Any]:
+    """Construire le bloc validation du manifest."""
+    if report is None:
+        return {
+            "overall": "not_run",
+            "structural": [],
+            "semantic": [],
+            "chunk_warnings": chunk_warnings,
+        }
+    return {
+        "overall": report.overall,
+        "structural": [r.to_dict() for r in report.structural],
+        "semantic": [r.to_dict() for r in report.semantic],
+        "chunk_warnings": chunk_warnings,
     }

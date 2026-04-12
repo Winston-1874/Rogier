@@ -174,7 +174,7 @@ class TestExportManifest:
         ]
         config = ChunkingConfig()
         manifest = export_manifest(doc, version, chunks, config)
-        assert manifest["validation"]["warnings"] == ["warn1", "warn2"]
+        assert manifest["validation"]["chunk_warnings"] == ["warn1", "warn2"]
 
 
 # ---------------------------------------------------------------------------

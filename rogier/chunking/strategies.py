@@ -11,7 +11,8 @@ import re
 from dataclasses import dataclass, field
 
 from rogier.chunking.breadcrumb import build_breadcrumb
-from rogier.parsing.tree import ChunkingConfig, Node, NodeKind
+from rogier.overlay import get_effective_content, walk_articles
+from rogier.parsing.tree import ChunkingConfig, Node
 
 # Regex §10.2 : détection des paragraphes numérotés dans un article
 _RE_PARAGRAPH = re.compile(
@@ -50,24 +51,7 @@ def _get_article_content(
     manual_edits: dict[str, str],
 ) -> str:
     """Récupérer le contenu d'un article en appliquant l'overlay manual_edits."""
-    if node_path in manual_edits:
-        return manual_edits[node_path]
-    return node.content
-
-
-def _walk_articles(
-    node: Node,
-    current_path: str,
-) -> list[tuple[Node, str]]:
-    """Parcourir l'arbre et collecter tous les articles avec leur chemin."""
-    results: list[tuple[Node, str]] = []
-    for i, child in enumerate(node.children):
-        child_path = f"{current_path}.{i}" if current_path else str(i)
-        if child.kind == NodeKind.ARTICLE:
-            results.append((child, child_path))
-        else:
-            results.extend(_walk_articles(child, child_path))
-    return results
+    return get_effective_content(node, node_path, manual_edits)
 
 
 def chunk_per_article(
@@ -85,7 +69,7 @@ def chunk_per_article(
     levels_filter = config.breadcrumb_levels or None
     chunks: list[Chunk] = []
 
-    for article, article_path in _walk_articles(root, ""):
+    for article, article_path in walk_articles(root):
         content = _get_article_content(article, article_path, manual_edits)
         if config.include_breadcrumb:
             path_nodes = _collect_path_to_node(root, article_path)
@@ -116,7 +100,7 @@ def chunk_hybrid(
     levels_filter = config.breadcrumb_levels or None
     chunks: list[Chunk] = []
 
-    for article, article_path in _walk_articles(root, ""):
+    for article, article_path in walk_articles(root):
         content = _get_article_content(article, article_path, manual_edits)
         path_nodes = _collect_path_to_node(root, article_path)
 

@@ -115,8 +115,8 @@ class TestChunkPerArticle:
 
         # Appliquer un edit sur le premier article (chemin "0.0.0.0.0")
         # On doit trouver le vrai chemin
-        from rogier.chunking.strategies import _walk_articles
-        articles = _walk_articles(tree, "")
+        from rogier.overlay import walk_articles
+        articles = walk_articles(tree)
         first_path = articles[0][1]
 
         edits = {first_path: "Contenu modifié par test"}
