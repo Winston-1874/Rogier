@@ -5,6 +5,7 @@ from __future__ import annotations
 import copy
 import json
 import logging
+from urllib.parse import quote
 
 from fastapi import APIRouter, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
@@ -14,6 +15,7 @@ from rogier.dependencies import AuthDep, ConfigDep, TemplatesDep
 from rogier.parsing.tree import Node, NodeKind
 from rogier.storage import paths as storage_paths
 from rogier.storage.documents import delete_document, load_document
+from rogier.storage.locks import read_json, write_json
 from rogier.storage.versions import (
     create_new_version,
     label_container_rename,
@@ -37,16 +39,17 @@ def _load_dismissed(data_dir, doc_hash: str) -> list[str]:
     if not path.exists():
         return []
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError):
+        data = read_json(path)
+        # Le fichier stocke une liste sous clé "dismissed" pour rester dict-compatible
+        return list(data.get("dismissed", []))
+    except (json.JSONDecodeError, OSError, ValueError):
         return []
 
 
 def _save_dismissed(data_dir, doc_hash: str, dismissed: list[str]) -> None:
-    """Sauvegarder les types de warnings ignores."""
+    """Sauvegarder les types de warnings ignores (écriture atomique via locks)."""
     path = storage_paths.dismissed_warnings_path(data_dir, doc_hash)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(dismissed, ensure_ascii=False), encoding="utf-8")
+    write_json(path, {"dismissed": dismissed})
 
 
 # ---------------------------------------------------------------------------
@@ -91,10 +94,12 @@ def _build_breadcrumb(root: Node, path: str) -> list[dict[str, str]]:
     for i, part in enumerate(parts):
         idx = int(part)
         current = current.children[idx]
-        crumbs.append({
-            "label": current.label,
-            "path": ".".join(parts[: i + 1]),
-        })
+        crumbs.append(
+            {
+                "label": current.label,
+                "path": ".".join(parts[: i + 1]),
+            }
+        )
     return crumbs
 
 
@@ -129,7 +134,9 @@ def _flatten_paths(node: Node, current_path: str = "") -> list[tuple[str, NodeKi
 
 
 def _find_prev_next(
-    root: Node, selected_path: str, selected_kind: NodeKind,
+    root: Node,
+    selected_path: str,
+    selected_kind: NodeKind,
 ) -> tuple[str | None, str | None]:
     """Trouver les chemins precedent et suivant du meme kind."""
     flat = _flatten_paths(root)
@@ -151,22 +158,23 @@ def _collect_warning_nodes(
     result: list[dict] = []
     for i, child in enumerate(node.children):
         child_path = f"{current_path}.{i}" if current_path else str(i)
-        active_warnings = [
-            w for w in child.metadata.warnings if w not in dismissed
-        ]
+        active_warnings = [w for w in child.metadata.warnings if w not in dismissed]
         if active_warnings:
-            result.append({
-                "path": child_path,
-                "label": child.label,
-                "title": child.title,
-                "warnings": active_warnings,
-            })
+            result.append(
+                {
+                    "path": child_path,
+                    "label": child.label,
+                    "title": child.title,
+                    "warnings": active_warnings,
+                }
+            )
         result.extend(_collect_warning_nodes(child, dismissed, child_path))
     return result
 
 
 def _find_prev_next_warning(
-    warning_nodes: list[dict], selected_path: str,
+    warning_nodes: list[dict],
+    selected_path: str,
 ) -> tuple[str | None, str | None]:
     """Trouver le warning precedent et suivant par rapport au noeud courant."""
     paths = [wn["path"] for wn in warning_nodes]
@@ -270,20 +278,21 @@ async def document_tree(
     warning_types = _unique_warning_types(warning_nodes)
 
     # Warnings actifs du noeud selectionne (filtres)
-    active_warnings = [
-        w for w in selected_node.metadata.warnings if w not in dismissed
-    ]
+    active_warnings = [w for w in selected_node.metadata.warnings if w not in dismissed]
 
     # Navigation precedent/suivant (meme kind)
     prev_path, next_path = (None, None)
     if node:
         prev_path, next_path = _find_prev_next(
-            doc.tree, node, selected_node.kind,
+            doc.tree,
+            node,
+            selected_node.kind,
         )
 
     # Navigation precedent/suivant warning
     prev_warning, next_warning = _find_prev_next_warning(
-        warning_nodes, node,
+        warning_nodes,
+        node,
     )
 
     return templates.TemplateResponse(
@@ -354,8 +363,12 @@ async def edit_node(
     if target.kind == NodeKind.ARTICLE:
         label = label_manual_edit_article(target.number)
     elif target.kind in (
-        NodeKind.PARTIE, NodeKind.LIVRE, NodeKind.TITRE,
-        NodeKind.CHAPITRE, NodeKind.SECTION, NodeKind.SOUS_SECTION,
+        NodeKind.PARTIE,
+        NodeKind.LIVRE,
+        NodeKind.TITRE,
+        NodeKind.CHAPITRE,
+        NodeKind.SECTION,
+        NodeKind.SOUS_SECTION,
     ):
         label = label_container_rename(target.kind_label(), target.number)
     else:
@@ -370,12 +383,16 @@ async def edit_node(
         new_config = copy.deepcopy(current_version.config)
     else:
         from rogier.parsing.tree import DocumentConfig
+
         new_config = DocumentConfig()
 
     new_config.manual_edits[node_path] = new_content
 
     version = create_new_version(
-        config.data_dir, doc, config=new_config, label=label,
+        config.data_dir,
+        doc,
+        config=new_config,
+        label=label,
     )
     return JSONResponse({"ok": True, "version_id": version.id})
 
@@ -400,9 +417,9 @@ async def dismiss_warning(
     url = f"/document/{doc_hash}/tree"
     params = []
     if return_node:
-        params.append(f"node={return_node}")
+        params.append(f"node={quote(return_node, safe='')}")
     if return_mode:
-        params.append(f"show_warnings={return_mode}")
+        params.append(f"show_warnings={quote(return_mode, safe='')}")
     if params:
         url += "?" + "&".join(params)
     return RedirectResponse(url=url + "#content", status_code=302)
@@ -426,7 +443,7 @@ async def restore_warning(
         _save_dismissed(config.data_dir, doc_hash, dismissed)
     url = f"/document/{doc_hash}/tree"
     if return_node:
-        url += f"?node={return_node}"
+        url += f"?node={quote(return_node, safe='')}"
     return RedirectResponse(url=url + "#content", status_code=302)
 
 
