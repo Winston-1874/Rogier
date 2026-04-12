@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Rogier — Erreur{% endblock %}
+
+{% block content %}
+<section class="error-section">
+    <h1>Une erreur est survenue</h1>
+    <p class="error-message">{{ error_message }}</p>
+    {% if correlation_id %}
+    <p class="error-id">ID d'erreur : {{ correlation_id }}</p>
+    {% endif %}
+    <p><a href="/" class="btn btn-primary">Retour au tableau de bord</a></p>
+</section>
+{% endblock %}

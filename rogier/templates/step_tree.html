@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Rogier — {{ document.name }}{% endblock %}
+
+{% block content %}
+{% if show_warnings_banner %}
+<div class="warning-banner">
+    <p>Le document a ete importe avec des avertissements. Certains elements peuvent necessiter une verification manuelle.</p>
+</div>
+{% endif %}
+
+<section class="tree-layout">
+    <aside class="tree-panel">
+        <div class="tree-controls">
+            <span class="tree-stats">
+                {% if counts.get('LIVRE') %}{{ counts['LIVRE'] }} livre{{ 's' if counts.get('LIVRE', 0) > 1 else '' }}{% endif %}{% if counts.get('LIVRE') and counts.get('ARTICLE') %}, {% endif %}{% if counts.get('ARTICLE') %}{{ counts['ARTICLE'] }} article{{ 's' if counts.get('ARTICLE', 0) > 1 else '' }}{% endif %}
+            </span>
+            <button type="button" class="btn-small" id="expand-all">Tout developper</button>
+            <button type="button" class="btn-small" id="collapse-all">Tout replier</button>
+        </div>
+        <nav class="tree-nav" aria-label="Arbre du document">
+            <ul class="tree-root">
+                {% for item in tree_data recursive %}
+                <li class="tree-item{% if item.path == selected_path %} tree-item--selected{% endif %}"
+                    data-kind="{{ item.kind }}" data-depth="{{ item.depth }}">
+                    {% if item.has_children %}
+                    <span class="tree-chevron{% if item.depth < 2 %} tree-chevron--open{% endif %}" aria-hidden="true"></span>
+                    {% else %}
+                    <span class="tree-indent" aria-hidden="true"></span>
+                    {% endif %}
+                    <a href="/document/{{ document.hash }}/tree?node={{ item.path }}"
+                       class="tree-link{% if item.is_article %} tree-link--article{% endif %}">
+                        {{ item.label }}
+                        {% if item.title and not item.is_article %}<span class="tree-title">{{ item.title }}</span>{% endif %}
+                    </a>
+                    {% if item.has_warnings %}
+                    <span class="tree-warning" title="Avertissements presents"></span>
+                    {% endif %}
+                    {% if item.has_children %}
+                    <ul class="tree-children{% if item.depth >= 2 %} tree-children--collapsed{% endif %}">
+                        {{ loop(item.children) }}
+                    </ul>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        </nav>
+    </aside>
+
+    <div class="content-panel">
+        <nav class="breadcrumb" aria-label="Fil d'Ariane">
+            {% for crumb in breadcrumb %}
+            {% if not loop.last %}
+            <a href="/document/{{ document.hash }}/tree{% if crumb.path %}?node={{ crumb.path }}{% endif %}">{{ crumb.label }}</a>
+            <span class="breadcrumb-sep" aria-hidden="true">&gt;</span>
+            {% else %}
+            <span class="breadcrumb-current">{{ crumb.label }}</span>
+            {% endif %}
+            {% endfor %}
+        </nav>
+
+        <article class="node-content">
+            <h2>{{ selected_node.label }}{% if selected_node.title %} — {{ selected_node.title }}{% endif %}</h2>
+
+            {% if selected_node.content %}
+            <div class="node-text">{{ selected_node.content }}</div>
+            {% elif selected_node.children %}
+            <p class="hint">Ce noeud contient {{ selected_node.children|length }} element{{ 's' if selected_node.children|length > 1 else '' }} :</p>
+            <ul class="child-list">
+                {% for child in selected_node.children %}
+                {% set child_path = selected_path ~ ('.' if selected_path else '') ~ loop.index0 %}
+                <li>
+                    <a href="/document/{{ document.hash }}/tree?node={{ child_path }}">
+                        {{ child.label }}{% if child.title %} — {{ child.title }}{% endif %}
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="hint">Ce noeud est vide.</p>
+            {% endif %}
+
+            {% if selected_node.metadata.warnings %}
+            <div class="node-warnings">
+                <p><strong>Avertissements :</strong></p>
+                <ul>
+                    {% for w in selected_node.metadata.warnings %}
+                    <li>{{ w }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </article>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/tree_navigation.js"></script>
+{% endblock %}

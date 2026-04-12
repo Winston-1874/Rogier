@@ -1,7 +1,7 @@
 """Point d'entrée de l'application Rogier.
 
 Crée l'application FastAPI, monte les fichiers statiques et les templates,
-et configure les routes d'authentification et le dashboard.
+et enregistre les routers.
 """
 
 from __future__ import annotations
@@ -10,19 +10,19 @@ import logging
 from pathlib import Path
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, Form, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from rogier.auth import (
-    clear_session_cookie,
-    create_session_cookie,
-    get_current_user,
-    verify_password,
-)
 from rogier.config_app import AppConfig, exit_on_config_error
+from rogier.dependencies import AuthenticationRequiredError
+from rogier.errors import RogierError
 from rogier.logging_setup import setup_logging
+from rogier.routes.auth_routes import router as auth_router
+from rogier.routes.dashboard_routes import router as dashboard_router
+from rogier.routes.document_routes import router as document_router
+from rogier.routes.upload_routes import router as upload_router
 
 logger = logging.getLogger(__name__)
 
@@ -38,65 +38,98 @@ setup_logging(config.log_level)
 # Application FastAPI
 app = FastAPI(title="Rogier", version="0.1.0", docs_url=None, redoc_url=None)
 
-# Montage des fichiers statiques et templates
+# État partagé accessible via les dépendances
+app.state.config = config
+
 _base_dir = Path(__file__).resolve().parent
 app.mount("/static", StaticFiles(directory=_base_dir / "static"), name="static")
-templates = Jinja2Templates(directory=_base_dir / "templates")
+app.state.templates = Jinja2Templates(directory=_base_dir / "templates")
 
 
-@app.get("/login", response_class=HTMLResponse)
-async def login_page(request: Request) -> HTMLResponse:
-    """Afficher le formulaire de connexion."""
-    if get_current_user(request, config):
-        return RedirectResponse(url="/", status_code=302)
+# --- Gestionnaires d'erreurs ---
+
+
+@app.exception_handler(AuthenticationRequiredError)
+async def auth_required_handler(
+    request: Request,
+    exc: AuthenticationRequiredError,
+) -> HTMLResponse:
+    """Rediriger vers /login si non authentifié."""
+    from fastapi.responses import RedirectResponse
+
+    return RedirectResponse(url="/login", status_code=302)
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(
+    request: Request,
+    exc: HTTPException,
+) -> HTMLResponse:
+    """Afficher les erreurs HTTP (403, 404, etc.) via le template erreur."""
+    templates = app.state.templates
     return templates.TemplateResponse(
         request,
-        "login.html",
-        {"error": None, "csrf_token": None, "authenticated": False},
-    )
-
-
-@app.post("/login", response_class=HTMLResponse)
-async def login_submit(request: Request, password: str = Form(...)) -> HTMLResponse:
-    """Traiter la soumission du formulaire de connexion."""
-    if verify_password(password, config.admin_password_hash):
-        response = RedirectResponse(url="/", status_code=302)
-        create_session_cookie(response, config)
-        logger.info("Connexion réussie")
-        return response
-
-    logger.warning("Tentative de connexion échouée")
-    return templates.TemplateResponse(
-        request,
-        "login.html",
+        "error.html",
         {
-            "error": "Mot de passe incorrect.",
+            "error_message": str(exc.detail),
+            "correlation_id": None,
+            "authenticated": True,
             "csrf_token": None,
-            "authenticated": False,
         },
-        status_code=401,
+        status_code=exc.status_code,
     )
 
 
-@app.post("/logout")
-async def logout() -> RedirectResponse:
-    """Déconnecter l'utilisateur."""
-    response = RedirectResponse(url="/login", status_code=302)
-    clear_session_cookie(response)
-    logger.info("Déconnexion")
-    return response
-
-
-@app.get("/", response_class=HTMLResponse)
-async def dashboard(request: Request) -> HTMLResponse:
-    """Page d'accueil — redirige vers /login si non authentifié."""
-    if not get_current_user(request, config):
-        return RedirectResponse(url="/login", status_code=302)
+@app.exception_handler(RogierError)
+async def rogier_error_handler(
+    request: Request,
+    exc: RogierError,
+) -> HTMLResponse:
+    """Afficher la page d'erreur pour les erreurs métier."""
+    templates = app.state.templates
     return templates.TemplateResponse(
         request,
-        "dashboard.html",
-        {"csrf_token": None, "authenticated": True},
+        "error.html",
+        {
+            "error_message": exc.message,
+            "correlation_id": exc.correlation_id,
+            "authenticated": True,
+            "csrf_token": None,
+        },
+        status_code=400,
     )
+
+
+@app.exception_handler(500)
+async def internal_error_handler(
+    request: Request,
+    exc: Exception,
+) -> HTMLResponse:
+    """Afficher une page d'erreur générique pour les erreurs 500."""
+    import secrets as _secrets
+
+    correlation_id = _secrets.token_hex(4)
+    logger.exception("Erreur interne [%s]", correlation_id)
+    templates = app.state.templates
+    return templates.TemplateResponse(
+        request,
+        "error.html",
+        {
+            "error_message": "Une erreur inattendue est survenue. Veuillez reessayer.",
+            "correlation_id": correlation_id,
+            "authenticated": True,
+            "csrf_token": None,
+        },
+        status_code=500,
+    )
+
+
+# --- Enregistrement des routers ---
+
+app.include_router(auth_router)
+app.include_router(dashboard_router)
+app.include_router(document_router)
+app.include_router(upload_router)
 
 
 if __name__ == "__main__":

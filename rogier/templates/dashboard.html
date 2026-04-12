@@ -5,6 +5,42 @@
 {% block content %}
 <section>
     <h1>Rogier — bibliotheque</h1>
-    <p>Rogier demarre correctement. L'interface complete sera disponible en Phase 4.</p>
+    <p><a href="/upload" class="btn btn-primary">Nouveau document</a></p>
+
+    {% if documents %}
+    <table class="doc-table">
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Famille</th>
+                <th>Articles</th>
+                <th>Date de creation</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for doc in documents %}
+            <tr>
+                <td><a href="/document/{{ doc.hash }}/tree">{{ doc.name }}</a></td>
+                <td>{{ doc.family }}</td>
+                <td>{{ doc.article_count }}</td>
+                <td>{{ doc.created_at }}</td>
+                <td>
+                    <form method="post" action="/document/{{ doc.hash }}/delete"
+                          onsubmit="return confirm('Supprimer ce document ?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <button type="submit" class="btn btn-danger btn-small">Supprimer</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <p>Aucun document pour le moment.</p>
+        <p>Pour commencer, importez un texte legislatif via le bouton ci-dessus.</p>
+    </div>
+    {% endif %}
 </section>
 {% endblock %}

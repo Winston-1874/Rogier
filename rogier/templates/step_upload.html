@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Rogier — Nouveau document{% endblock %}
+
+{% block content %}
+<section class="upload-section">
+    <h1>Importer un document</h1>
+
+    {% if error %}
+    <p class="error-message">{{ error }}</p>
+    {% endif %}
+
+    <div class="info-box">
+        <p><strong>Avant d'importer un texte dans Rogier :</strong></p>
+        <ul>
+            <li>Utilise uniquement des sources officielles : pour le droit belge, telecharge ou copie le lien depuis Justel sur ejustice.just.fgov.be.</li>
+            <li>Un seul code ou une seule loi par import. Rogier n'est pas concu pour traiter plusieurs textes dans un meme document.</li>
+            <li>Si tu veux importer le CSA, copie-colle simplement cette URL : <code>https://www.ejustice.just.fgov.be/cgi_loi/change_lg.pl?language=fr&amp;la=F&amp;cn=2019032309&amp;table_name=loi</code></li>
+        </ul>
+    </div>
+
+    <div class="upload-modes">
+        <form method="post" action="/upload" enctype="multipart/form-data" class="upload-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+            <fieldset class="upload-mode">
+                <legend>Mode A — Fichier local</legend>
+                <label for="html_file">Fichier HTML (.html, .htm)</label>
+                <input type="file" id="html_file" name="html_file" accept=".html,.htm">
+                <p class="hint">Taille maximale : {{ max_upload_mb }} Mo</p>
+                <button type="submit" name="upload_mode" value="file" class="btn btn-primary">Importer le fichier</button>
+            </fieldset>
+
+            <fieldset class="upload-mode">
+                <legend>Mode B — URL Justel</legend>
+                <label for="justel_url">URL de la page Justel</label>
+                <input type="url" id="justel_url" name="justel_url" placeholder="https://www.ejustice.just.fgov.be/cgi_loi/change_lg.pl?...">
+                <button type="submit" name="upload_mode" value="url" class="btn btn-primary">Importer depuis l'URL</button>
+            </fieldset>
+        </form>
+    </div>
+
+    <p><a href="/">Retour au tableau de bord</a></p>
+</section>
+{% endblock %}
