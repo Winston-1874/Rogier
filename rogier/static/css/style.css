@@ -246,6 +246,14 @@ main:not(:has(.tree-layout)) {
     text-decoration: underline;
 }
 
+.doc-actions { 
+    display: flex; gap: 0.5rem; align-items: center;
+}
+
+.doc-actions form { 
+    display: inline; 
+}
+
 .empty-state {
     margin-top: 2rem;
     padding: 2rem;
