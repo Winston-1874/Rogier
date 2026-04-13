@@ -79,6 +79,14 @@
         </p>
 
         <button type="submit" class="btn btn-primary btn-large">Exporter en Markdown</button>
+
+        {% if manifest_exists %}
+        <p class="manifest-link">
+            <a href="/document/{{ document.hash }}/export/manifest" target="_blank" rel="noopener">
+                Voir le manifest JSON du dernier export
+            </a>
+        </p>
+        {% endif %}
     </section>
 </form>
 
