@@ -24,7 +24,7 @@ Le projet est nomme d'apres **Charles Rogier** (1800-1885), membre du gouverneme
 
 ```bash
 # Cloner le depot
-git clone <url-du-depot>
+git clone https://github.com/Winston-1874/Rogier
 cd rogier
 
 # Creer un environnement virtuel
