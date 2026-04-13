@@ -76,6 +76,10 @@ async def export_page(
     # Rapport de validation
     report = build_report(doc.tree, validation_config, manual_edits)
 
+    # Manifest disponible uniquement si un export a déjà été effectué
+    manifest_path = storage_paths.exports_dir(config.data_dir, doc_hash) / "manifest.json"
+    manifest_exists = manifest_path.exists()
+
     return templates.TemplateResponse(
         request,
         "step_export.html",
@@ -90,6 +94,7 @@ async def export_page(
             "estimated_size": estimated_size,
             "validation_config": validation_config,
             "report": report,
+            "manifest_exists": manifest_exists,
             "csrf_token": csrf_token,
             "authenticated": True,
         },
