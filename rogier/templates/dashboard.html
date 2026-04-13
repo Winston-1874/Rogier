@@ -25,9 +25,9 @@
                 <td>{{ doc.family }}</td>
                 <td>{{ doc.article_count }}</td>
                 <td>{{ doc.created_at }}</td>
-                <td>
-                    <form method="post" action="/document/{{ doc.hash }}/delete"
-                          onsubmit="return confirm('Supprimer ce document ?');">
+                <td class="doc-actions">
+                    <a href="/document/{{ doc.hash }}/export" class="btn-small">Exporter</a>
+                        <form method="post" action="/document/{{ doc.hash }}/delete" onsubmit="return confirm('Supprimer ce document ?');">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                         <button type="submit" class="btn btn-danger btn-small">Supprimer</button>
                     </form>
